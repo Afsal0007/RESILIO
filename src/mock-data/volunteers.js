@@ -17,7 +17,7 @@ export const VOLUNTEER_SKILLS = {
 export const VOLUNTEER_TASKS = [
   {
     id: 'task-1',
-    title: 'Night desk at Aluva camp',
+    title: 'Night desk at Devamatha CMI camp',
     status: 'limited',
     when: 'Tonight, 8pm–2am',
   },
@@ -29,7 +29,7 @@ export const VOLUNTEER_TASKS = [
   },
   {
     id: 'task-3',
-    title: 'Unload grocery kits, Chalakudy',
+    title: 'Unload grocery kits, Irinjalakuda',
     status: 'available',
     when: 'Tomorrow, 7am',
   },

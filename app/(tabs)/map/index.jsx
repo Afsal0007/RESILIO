@@ -9,6 +9,7 @@ import { useCamps, campPinStatus } from '@/services/campsStore';
 import { fetchNearbyHospitals } from '@/services/osm';
 import useGuardedAction from '@/hooks/useGuardedAction';
 import { KERALA_REGION, requestUserCoords } from '@/hooks/useUserLocation';
+import useSortedCamps from '@/hooks/useSortedCamps';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import ResilioMap from '@/components/map/ResilioMap';
 import Chip from '@/components/ui/Chip';
@@ -25,6 +26,7 @@ export default function MapScreen() {
   const router = useRouter();
   const requireAuth = useGuardedAction();
   const { camps } = useCamps();
+  const nearbyCamps = useSortedCamps(camps);
   const [layer, setLayer] = useState('Camps');
   const [osmHospitals, setOsmHospitals] = useState([]);
   const [hospitalLoading, setHospitalLoading] = useState(false);
@@ -126,7 +128,7 @@ export default function MapScreen() {
           </View>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 16 }}>
             {layer === 'Camps'
-              ? camps.slice(0, 4).map((camp) => (
+              ? nearbyCamps.map((camp) => (
                   <CampCard key={camp.id} camp={camp} onPress={() => router.push(`/camps/${camp.id}`)} />
                 ))
               : null}

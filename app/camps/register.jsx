@@ -81,8 +81,8 @@ export default function RegisterCamp() {
         medical,
         contact: contact.trim(),
         warden: warden.trim(),
-        distanceKm: 0,
         ownerId: user.id,
+        dataSource: 'registered',
         verified: false,
       });
       router.replace(`/camps/${camp.id}`);

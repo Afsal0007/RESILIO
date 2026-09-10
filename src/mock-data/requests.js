@@ -37,8 +37,8 @@ export const REQUESTS = [
     type: 'Technical',
     priority: 'limited',
     status: 'limited',
-    requester: 'Aluva camp warden',
-    location: 'Aluva',
+    requester: 'Thrissur camp coordinator',
+    location: 'Thrissur',
     createdAt: '1 hr ago',
     details: 'Generator is running but the camp pump will not start.',
     timeline: [
@@ -52,8 +52,8 @@ export const REQUESTS = [
     type: 'Relief',
     priority: 'available',
     status: 'available',
-    requester: 'Chalakudy Parish Hall',
-    location: 'Chalakudy',
+    requester: 'Vadanapally Bhagavathy Temple dining hall',
+    location: 'Vadanappally',
     createdAt: '2 hr ago',
     details: 'Rice and sambar already cooking. Need vegetables and oil.',
     timeline: [

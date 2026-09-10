@@ -1,13 +1,16 @@
 import { ScrollView, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { FONT } from '@/theme/tokens';
 import { canManageCamp, useCamps } from '@/services/campsStore';
+import { requestUserCoords } from '@/hooks/useUserLocation';
+import { haversineKm, roundKm } from '@/utils/distance';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
 import Card from '@/components/ui/Card';
 import StatusBadge from '@/components/ui/StatusBadge';
-import VerificationBadge from '@/components/ui/VerificationBadge';
+import CampSourceBadge from '@/components/ui/CampSourceBadge';
 import ProgressBar from '@/components/ui/ProgressBar';
 import SectionHeading from '@/components/ui/SectionHeading';
 import Button from '@/components/ui/Button';
@@ -19,6 +22,22 @@ export default function CampDetail() {
   const { user } = useAuth();
   const { getCamp } = useCamps();
   const camp = getCamp(campId);
+  const [distanceKm, setDistanceKm] = useState(null);
+
+  useEffect(() => {
+    if (!camp) {
+      setDistanceKm(null);
+      return undefined;
+    }
+    let active = true;
+    requestUserCoords().then((coords) => {
+      if (!active || !coords) return;
+      setDistanceKm(roundKm(haversineKm(coords.latitude, coords.longitude, camp.lat, camp.lng)));
+    });
+    return () => {
+      active = false;
+    };
+  }, [camp]);
 
   if (!camp) {
     return (
@@ -45,10 +64,11 @@ export default function CampDetail() {
         </Text>
         <Text className="mt-1 text-[14px] text-ink/70" style={{ fontFamily: FONT.regular }}>
           {camp.location}
+          {distanceKm == null ? '' : distanceKm < 1 ? ' · Nearby' : ` · ${distanceKm} km`}
         </Text>
         <View className="mt-3 flex-row flex-wrap" style={{ gap: 8 }}>
           <StatusBadge status={camp.status} />
-          <VerificationBadge verified={Boolean(camp.verified)} />
+          <CampSourceBadge camp={camp} />
         </View>
 
         <Card variant="browse" className="mt-5">
@@ -82,13 +102,13 @@ export default function CampDetail() {
             Warden
           </Text>
           <Text className="text-[15px] text-ink" style={{ fontFamily: FONT.semibold }}>
-            {camp.warden}
+            {camp.warden?.trim?.() || camp.warden || 'Contact not available'}
           </Text>
           <Text className="mt-2 text-[13px] text-ink/70" style={{ fontFamily: FONT.medium }}>
             Contact
           </Text>
           <Text className="text-[15px] text-ink" style={{ fontFamily: FONT.semibold }}>
-            {camp.contact}
+            {camp.contact?.trim?.() || 'Contact not available'}
           </Text>
         </Card>
 

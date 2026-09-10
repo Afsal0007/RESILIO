@@ -1,7 +1,7 @@
 import { Text, View } from 'react-native';
 import { FONT } from '@/theme/tokens';
 import StatusBadge from '@/components/ui/StatusBadge';
-import VerificationBadge from '@/components/ui/VerificationBadge';
+import CampSourceBadge from '@/components/ui/CampSourceBadge';
 import ProgressBar from '@/components/ui/ProgressBar';
 import Card from '@/components/ui/Card';
 
@@ -28,7 +28,7 @@ export default function CampCard({ camp, onPress, variant = 'browse' }) {
         <StatusBadge status={camp.status} />
       </View>
       <View className="mt-2">
-        <VerificationBadge verified={Boolean(camp.verified)} />
+        <CampSourceBadge camp={camp} />
       </View>
       <View className="mt-3 flex-row items-center justify-between">
         <Text className="text-[12px] text-ink/70" style={{ fontFamily: FONT.medium }}>

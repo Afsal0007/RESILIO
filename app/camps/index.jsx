@@ -4,6 +4,7 @@ import { Tent } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { isOrganizationRole } from '@/constants/roles';
 import { useCamps } from '@/services/campsStore';
+import useSortedCamps from '@/hooks/useSortedCamps';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
 import EmptyState from '@/components/layout/EmptyState';
@@ -14,6 +15,7 @@ export default function Camps() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
   const { camps } = useCamps();
+  const nearbyCamps = useSortedCamps(camps);
   const canRegister = isAuthenticated && isOrganizationRole(user?.role);
 
   return (
@@ -24,11 +26,11 @@ export default function Camps() {
           <Button label="Register a camp" onPress={() => router.push('/camps/register')} />
         </View>
       ) : null}
-      {camps.length === 0 ? (
+      {nearbyCamps.length === 0 ? (
         <EmptyState icon={Tent} message="No open camps in this district yet." />
       ) : (
         <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 24, paddingTop: 4 }}>
-          {camps.map((camp) => (
+          {nearbyCamps.map((camp) => (
             <CampCard key={camp.id} camp={camp} onPress={() => router.push(`/camps/${camp.id}`)} />
           ))}
         </ScrollView>

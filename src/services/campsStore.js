@@ -48,7 +48,11 @@ function campsReducer(state, action) {
 
 export function CampsProvider({ children }) {
   const [state, dispatch] = useReducer(campsReducer, {
-    camps: CAMPS.map((camp) => ({ ...camp, verified: camp.verified ?? true })),
+    camps: CAMPS.map((camp) => ({
+      ...camp,
+      dataSource: camp.dataSource ?? 'reported',
+      verified: camp.dataSource === 'registered' ? Boolean(camp.verified) : false,
+    })),
   });
 
   const addCamp = useCallback(async (payload) => {
@@ -59,6 +63,7 @@ export function CampsProvider({ children }) {
       closed: false,
       verified: false,
       ...payload,
+      dataSource: payload.dataSource ?? 'registered',
     };
     dispatch({ type: 'ADD', camp });
     return camp;

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Camera, LayoutDashboard, Map, Siren, HeartHandshake, Settings } from 'lucide-react-native';
@@ -8,6 +8,7 @@ import useGuardedAction from '@/hooks/useGuardedAction';
 import { useCamps } from '@/services/campsStore';
 import { fetchCurrentWeather, HEAVY_RAIN_MM } from '@/services/weather';
 import { KERALA_REGION, requestUserCoords } from '@/hooks/useUserLocation';
+import { sortCampsByNearest, withLiveDistance } from '@/utils/distance';
 import { ALERTS } from '@/mock-data/alerts';
 import { COLORS, FONT, RADIUS } from '@/theme/tokens';
 import ScreenContainer from '@/components/layout/ScreenContainer';
@@ -30,18 +31,23 @@ export default function Home() {
   const { setHelpMode } = useApp();
   const requireAuth = useGuardedAction();
   const { camps } = useCamps();
-  const nearest = [...camps].sort((a, b) => (a.distanceKm ?? 999) - (b.distanceKm ?? 999))[0];
   const [weather, setWeather] = useState(null);
+  const [userCoords, setUserCoords] = useState(null);
   const mockAlert = ALERTS[0];
   const heavyRain = weather && weather.rainLastHourMm > HEAVY_RAIN_MM;
   const greeting = isAuthenticated ? `Hello, ${user.name.split(' ')[0]}` : 'Hello';
+  const nearest = useMemo(() => {
+    const [camp] = withLiveDistance(sortCampsByNearest(camps, userCoords), userCoords);
+    return camp;
+  }, [camps, userCoords]);
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
       (async () => {
+        const coords = await requestUserCoords();
+        if (active) setUserCoords(coords);
         try {
-          const coords = await requestUserCoords();
           const lat = coords?.latitude ?? KERALA_REGION.latitude;
           const lng = coords?.longitude ?? KERALA_REGION.longitude;
           const current = await fetchCurrentWeather(lat, lng);

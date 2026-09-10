@@ -21,7 +21,7 @@ export const NOTIFICATIONS = [
   {
     id: 'n1',
     title: 'Camp capacity update',
-    body: 'Aluva Town Hall is now limited. 88 spots left.',
+    body: 'Devamatha CMI Public School is now limited. Details are approximate.',
     time: '12 min ago',
     status: 'limited',
   },
@@ -35,7 +35,7 @@ export const NOTIFICATIONS = [
   {
     id: 'n3',
     title: 'Volunteer shift',
-    body: 'Medical desk at Chalakudy camp starts at 6am.',
+    body: 'Medical desk at Brālam camp starts at 6am.',
     time: '2 hr ago',
     status: 'available',
   },
