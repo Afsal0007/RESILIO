@@ -1,10 +1,13 @@
+import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Camera, LayoutDashboard, Map, Siren, HeartHandshake, Settings } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useApp } from '@/context/AppContext';
 import useGuardedAction from '@/hooks/useGuardedAction';
 import { useCamps } from '@/services/campsStore';
+import { fetchCurrentWeather, HEAVY_RAIN_MM } from '@/services/weather';
+import { KERALA_REGION, requestUserCoords } from '@/hooks/useUserLocation';
 import { ALERTS } from '@/mock-data/alerts';
 import { COLORS, FONT, RADIUS } from '@/theme/tokens';
 import ScreenContainer from '@/components/layout/ScreenContainer';
@@ -28,8 +31,30 @@ export default function Home() {
   const requireAuth = useGuardedAction();
   const { camps } = useCamps();
   const nearest = [...camps].sort((a, b) => (a.distanceKm ?? 999) - (b.distanceKm ?? 999))[0];
-  const alert = ALERTS[0];
+  const [weather, setWeather] = useState(null);
+  const mockAlert = ALERTS[0];
+  const heavyRain = weather && weather.rainLastHourMm > HEAVY_RAIN_MM;
   const greeting = isAuthenticated ? `Hello, ${user.name.split(' ')[0]}` : 'Hello';
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      (async () => {
+        try {
+          const coords = await requestUserCoords();
+          const lat = coords?.latitude ?? KERALA_REGION.latitude;
+          const lng = coords?.longitude ?? KERALA_REGION.longitude;
+          const current = await fetchCurrentWeather(lat, lng);
+          if (active) setWeather(current);
+        } catch {
+          if (active) setWeather(null);
+        }
+      })();
+      return () => {
+        active = false;
+      };
+    }, [])
+  );
 
   return (
     <ScreenContainer>
@@ -85,18 +110,29 @@ export default function Home() {
           </Pressable>
         </View>
 
-        {alert ? (
+        {heavyRain ? (
+          <Card variant="alert" status="unavailable" className="mt-5">
+            <Text className="text-[14px] text-ink" style={{ fontFamily: FONT.bold }}>
+              Heavy rainfall detected in your area
+            </Text>
+            <Text className="mt-1 text-[13px] text-ink/80" style={{ fontFamily: FONT.regular }}>
+              {weather.rainLastHourMm.toFixed(1)} mm in the last hour. Move to higher ground if you are near a river or slope.
+            </Text>
+          </Card>
+        ) : null}
+
+        {mockAlert ? (
           <Card
             variant="alert"
             status="unavailable"
-            className="mt-5"
+            className={heavyRain ? 'mt-3' : 'mt-5'}
             onPress={() => router.push('/notifications')}
           >
             <Text className="text-[14px] text-ink" style={{ fontFamily: FONT.bold }}>
-              {alert.title}
+              {mockAlert.title}
             </Text>
             <Text className="mt-1 text-[13px] text-ink/80" style={{ fontFamily: FONT.regular }}>
-              {alert.body}
+              {mockAlert.body}
             </Text>
           </Card>
         ) : null}

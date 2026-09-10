@@ -15,10 +15,19 @@ export default function FacilityCard({ facility, onPress }) {
             {facility.type} · {facility.location}
           </Text>
         </View>
-        <StatusBadge status={facility.urgency} label={facility.urgency === 'unavailable' ? 'Urgent' : undefined} />
+        {facility.urgency ? (
+          <StatusBadge
+            status={facility.urgency}
+            label={facility.urgency === 'unavailable' ? 'Urgent' : undefined}
+          />
+        ) : null}
       </View>
       <Text className="mt-2 text-[13px] text-ink/80" style={{ fontFamily: FONT.medium }}>
-        {facility.needs?.[0]?.name ? `Need: ${facility.needs[0].name}` : facility.district}
+        {facility.needs?.[0]?.name
+          ? `Need: ${facility.needs[0].name}`
+          : facility.source === 'osm'
+            ? 'OpenStreetMap'
+            : facility.district}
       </Text>
     </Card>
   );

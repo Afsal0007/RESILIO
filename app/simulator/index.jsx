@@ -1,7 +1,10 @@
+import { useCallback, useState } from 'react';
 import { Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { CloudRain, Mountain } from 'lucide-react-native';
 import { COLORS, FONT } from '@/theme/tokens';
+import { fetchCurrentWeather, formatWeatherSummary } from '@/services/weather';
+import { KERALA_REGION, requestUserCoords } from '@/hooks/useUserLocation';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
 import SectionHeading from '@/components/ui/SectionHeading';
@@ -25,11 +28,40 @@ const SCENARIOS = [
 
 export default function Simulator() {
   const router = useRouter();
+  const [weatherLabel, setWeatherLabel] = useState('Current conditions: loading…');
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      (async () => {
+        try {
+          const coords = await requestUserCoords();
+          const lat = coords?.latitude ?? KERALA_REGION.latitude;
+          const lng = coords?.longitude ?? KERALA_REGION.longitude;
+          const weather = await fetchCurrentWeather(lat, lng);
+          if (active) setWeatherLabel(formatWeatherSummary(weather));
+        } catch {
+          if (active) setWeatherLabel(formatWeatherSummary(null));
+        }
+      })();
+      return () => {
+        active = false;
+      };
+    }, [])
+  );
 
   return (
     <ScreenContainer>
       <Header title="Simulator" variant="status" showBack />
       <View className="flex-1 px-4 pt-4">
+        <Card variant="browse" className="mb-5">
+          <Text className="text-[14px] text-ink" style={{ fontFamily: FONT.semibold }}>
+            {weatherLabel}
+          </Text>
+          <Text className="mt-1 text-[12px] text-ink/70" style={{ fontFamily: FONT.regular }}>
+            Live readout only. Run scenario still uses the scripted demo, not a live forecast.
+          </Text>
+        </Card>
         <SectionHeading>Pick a scenario</SectionHeading>
         {SCENARIOS.map((item) => (
           <Card key={item.id} variant="browse" className="mb-3">

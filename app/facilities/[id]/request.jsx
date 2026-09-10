@@ -13,9 +13,22 @@ export default function FacilityRequest() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const facility = getFacility(id);
-  const [item, setItem] = useState(facility.needs[0]?.name || '');
+  const [item, setItem] = useState(facility?.needs?.[0]?.name || '');
   const [quantity, setQuantity] = useState('');
   const [notes, setNotes] = useState('');
+
+  if (!facility) {
+    return (
+      <ProtectedRoute>
+        <ScreenContainer>
+          <Header title="Request support" showBack />
+          <Text className="px-4 pt-6 text-[15px] text-ink/70" style={{ fontFamily: FONT.medium }}>
+            This facility is no longer listed.
+          </Text>
+        </ScreenContainer>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute>

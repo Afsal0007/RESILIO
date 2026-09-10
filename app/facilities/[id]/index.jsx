@@ -15,6 +15,19 @@ export default function FacilityDetail() {
   const requireAuth = useGuardedAction();
   const facility = getFacility(id);
 
+  if (!facility) {
+    return (
+      <ScreenContainer>
+        <Header title="Facility" showBack />
+        <View className="flex-1 px-4 pt-6">
+          <Text className="text-[15px] text-ink/70" style={{ fontFamily: FONT.medium }}>
+            This facility is no longer listed.
+          </Text>
+        </View>
+      </ScreenContainer>
+    );
+  }
+
   return (
     <ScreenContainer>
       <Header title="Facility" showBack />

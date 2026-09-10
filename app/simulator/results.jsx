@@ -9,7 +9,7 @@ import StatusBadge from '@/components/ui/StatusBadge';
 
 const CHAIN = [
   { id: 'road', title: 'NH 66, Edapally', before: 'available', afterRain: 'limited', afterSlide: 'unavailable', note: 'Water on the carriageway, then a cut.' },
-  { id: 'hospital', title: 'Aluva Taluk Hospital', before: 'available', afterRain: 'limited', afterSlide: 'limited', note: 'Ambulances reroute. Wait times rise.' },
+  { id: 'hospital', title: 'Nearest district hospital', before: 'available', afterRain: 'limited', afterSlide: 'limited', note: 'Ambulances reroute. Wait times rise.' },
   { id: 'camp', title: 'Aluva Town Hall Camp', before: 'limited', afterRain: 'unavailable', afterSlide: 'unavailable', note: 'Inflow of families. Food and beds run short.' },
 ];
 

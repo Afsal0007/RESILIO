@@ -1,14 +1,14 @@
-import { useMemo, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { FACILITIES } from '@/mock-data/facilities';
 import { RESOURCES } from '@/mock-data/resources';
 import { ROAD_REPORTS } from '@/mock-data/road-reports';
 import { VOLUNTEER_TASKS } from '@/mock-data/volunteers';
-import { FONT, STATUS_HEX } from '@/theme/tokens';
+import { COLORS, FONT, STATUS_HEX } from '@/theme/tokens';
 import { useCamps, campPinStatus } from '@/services/campsStore';
+import { fetchNearbyHospitals } from '@/services/osm';
 import useGuardedAction from '@/hooks/useGuardedAction';
-import { KERALA_REGION } from '@/hooks/useUserLocation';
+import { KERALA_REGION, requestUserCoords } from '@/hooks/useUserLocation';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import ResilioMap from '@/components/map/ResilioMap';
 import Chip from '@/components/ui/Chip';
@@ -19,12 +19,41 @@ import ResourceCard from '@/components/cards/ResourceCard';
 import FacilityCard from '@/components/cards/FacilityCard';
 
 const LAYERS = ['Camps', 'Hospitals', 'Roads', 'Volunteers', 'Resources'];
+const HOSPITAL_RADIUS_M = 15000;
 
 export default function MapScreen() {
   const router = useRouter();
   const requireAuth = useGuardedAction();
   const { camps } = useCamps();
   const [layer, setLayer] = useState('Camps');
+  const [osmHospitals, setOsmHospitals] = useState([]);
+  const [hospitalLoading, setHospitalLoading] = useState(false);
+
+  const hospitals = osmHospitals;
+
+  useEffect(() => {
+    if (layer !== 'Hospitals') return undefined;
+    let cancelled = false;
+
+    (async () => {
+      setHospitalLoading(true);
+      try {
+        const coords = await requestUserCoords();
+        const lat = coords?.latitude ?? KERALA_REGION.latitude;
+        const lng = coords?.longitude ?? KERALA_REGION.longitude;
+        const nearby = await fetchNearbyHospitals(lat, lng, HOSPITAL_RADIUS_M);
+        if (!cancelled) setOsmHospitals(nearby);
+      } catch {
+        if (!cancelled) setOsmHospitals([]);
+      } finally {
+        if (!cancelled) setHospitalLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [layer]);
 
   const markers = useMemo(() => {
     if (layer === 'Camps') {
@@ -38,6 +67,21 @@ export default function MapScreen() {
           onPress: () => router.push(`/camps/${camp.id}`),
         }));
     }
+    if (layer === 'Hospitals') {
+      return hospitals
+        .filter((facility) => facility.lat != null && facility.lng != null)
+        .map((facility) => ({
+          id: facility.id,
+          title: facility.name,
+          coordinate: { latitude: facility.lat, longitude: facility.lng },
+          pinColor: facility.needs?.length
+            ? STATUS_HEX[facility.urgency] || COLORS.backwater
+            : COLORS.backwater,
+          onPress: facility.needs?.length
+            ? () => router.push(`/facilities/${facility.id}`)
+            : undefined,
+        }));
+    }
     if (layer === 'Roads') {
       return ROAD_REPORTS.filter((report) => report.lat != null && report.lng != null).map((report) => ({
         id: report.id,
@@ -48,7 +92,7 @@ export default function MapScreen() {
       }));
     }
     return [];
-  }, [camps, layer, router]);
+  }, [camps, hospitals, layer, router]);
 
   return (
     <ScreenContainer>
@@ -72,9 +116,14 @@ export default function MapScreen() {
         </ScrollView>
 
         <View className="absolute bottom-0 left-0 right-0 max-h-[46%] rounded-t-soft bg-paper px-4 pt-3">
-          <Text className="mb-3 text-[15px] text-ink" style={{ fontFamily: FONT.bold }}>
-            Nearby {layer.toLowerCase()}
-          </Text>
+          <View className="mb-3 flex-row items-center">
+            <Text className="flex-1 text-[15px] text-ink" style={{ fontFamily: FONT.bold }}>
+              Nearby {layer.toLowerCase()}
+            </Text>
+            {layer === 'Hospitals' && hospitalLoading ? (
+              <ActivityIndicator color={COLORS.backwater} />
+            ) : null}
+          </View>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 16 }}>
             {layer === 'Camps'
               ? camps.slice(0, 4).map((camp) => (
@@ -82,14 +131,29 @@ export default function MapScreen() {
                 ))
               : null}
             {layer === 'Hospitals'
-              ? FACILITIES.filter((item) => item.type === 'Hospital').map((facility) => (
+              ? hospitals.length === 0 && !hospitalLoading
+                ? (
+                  <Text className="mb-3 text-[13px] text-ink/70" style={{ fontFamily: FONT.regular }}>
+                    No live hospitals found nearby. Check location permission or try again.
+                  </Text>
+                )
+                : hospitals.map((facility) => (
                   <FacilityCard
                     key={facility.id}
                     facility={facility}
-                    onPress={() => router.push(`/facilities/${facility.id}`)}
+                    onPress={
+                      facility.needs?.length
+                        ? () => router.push(`/facilities/${facility.id}`)
+                        : undefined
+                    }
                   />
                 ))
               : null}
+            {layer === 'Hospitals' ? (
+              <Text className="mt-1 text-[11px] text-ink/50" style={{ fontFamily: FONT.medium }}>
+                Live hospital data via OpenStreetMap
+              </Text>
+            ) : null}
             {layer === 'Resources'
               ? RESOURCES.slice(0, 4).map((resource) => (
                   <ResourceCard
