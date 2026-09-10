@@ -1,0 +1,86 @@
+export const FACILITIES = [
+  {
+    id: 'fac-mcc',
+    name: 'Govt. Medical College, Kozhikode',
+    type: 'Hospital',
+    status: 'limited',
+    urgency: 'unavailable',
+    location: 'Kozhikode',
+    district: 'Kozhikode',
+    contact: '0495-2355331',
+    needs: [
+      { name: 'IV fluids', status: 'unavailable' },
+      { name: 'ICU beds', status: 'limited' },
+      { name: 'Generators', status: 'available' },
+    ],
+  },
+  {
+    id: 'fac-aluva-phc',
+    name: 'Aluva Taluk Hospital',
+    type: 'Hospital',
+    status: 'limited',
+    urgency: 'limited',
+    location: 'Aluva',
+    district: 'Ernakulam',
+    contact: '0484-2624033',
+    needs: [
+      { name: 'Antibiotics', status: 'limited' },
+      { name: 'Stretchers', status: 'available' },
+    ],
+  },
+  {
+    id: 'fac-idukki-phc',
+    name: 'Painavu PHC',
+    type: 'Clinic',
+    status: 'unavailable',
+    urgency: 'unavailable',
+    location: 'Painavu',
+    district: 'Idukki',
+    contact: '0486-2232188',
+    needs: [
+      { name: 'Tetanus toxoid', status: 'unavailable' },
+      { name: 'Drinking water', status: 'unavailable' },
+      { name: 'Staff relief', status: 'limited' },
+    ],
+  },
+  {
+    id: 'fac-kalpetta',
+    name: 'District Hospital Kalpetta',
+    type: 'Hospital',
+    status: 'available',
+    urgency: 'available',
+    location: 'Kalpetta',
+    district: 'Wayanad',
+    contact: '0493-6202300',
+    needs: [{ name: 'Blood units (O+)', status: 'limited' }],
+  },
+  {
+    id: 'fac-alpy-fire',
+    name: 'Alappuzha Fire Station',
+    type: 'Rescue base',
+    status: 'limited',
+    urgency: 'limited',
+    location: 'Alappuzha',
+    district: 'Alappuzha',
+    contact: '0477-2250101',
+    needs: [
+      { name: 'Fuel for pumps', status: 'limited' },
+      { name: 'Life jackets', status: 'available' },
+    ],
+  },
+  {
+    id: 'fac-thrissur-collectorate',
+    name: 'Thrissur Collectorate Control Room',
+    type: 'Coordination',
+    status: 'available',
+    urgency: 'available',
+    location: 'Thrissur',
+    district: 'Thrissur',
+    contact: '0487-2361020',
+    needs: [{ name: 'Radio operators', status: 'limited' }],
+  },
+];
+
+export function getFacility(id) {
+  return FACILITIES.find((item) => item.id === id) || FACILITIES[0];
+}

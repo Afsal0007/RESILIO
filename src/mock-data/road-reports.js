@@ -1,0 +1,76 @@
+export const ROAD_REPORTS = [
+  {
+    id: 'nh66-edapally',
+    roadName: 'NH 66',
+    segment: 'Edapally – Kalamassery',
+    issue: 'Standing water. One lane closed near the bypass.',
+    confidence: 0.82,
+    status: 'limited',
+    confirmations: [
+      { id: 'c1', name: 'Anjali P.', time: '12 min ago' },
+      { id: 'c2', name: 'Rescue Team Kochi', time: '20 min ago' },
+      { id: 'c3', name: 'Bus operator #441', time: '41 min ago' },
+    ],
+    lat: 10.0261,
+    lng: 76.3125,
+    scannedAt: 'Today, 4:12pm',
+  },
+  {
+    id: 'nh766-vythiri',
+    roadName: 'NH 766',
+    segment: 'Vythiri ghat',
+    issue: 'Debris and slope crack on the hill side.',
+    confidence: 0.91,
+    status: 'unavailable',
+    confirmations: [
+      { id: 'c4', name: 'Wayanad Police', time: '8 min ago' },
+      { id: 'c5', name: 'Taxi union', time: '15 min ago' },
+    ],
+    lat: 11.551,
+    lng: 76.041,
+    scannedAt: 'Today, 3:40pm',
+  },
+  {
+    id: 'mc-road-perumbavoor',
+    roadName: 'MC Road',
+    segment: 'Perumbavoor junction',
+    issue: 'Shoulder collapse. Two-wheelers only.',
+    confidence: 0.64,
+    status: 'limited',
+    confirmations: [{ id: 'c6', name: 'Local shopkeeper', time: '1 hr ago' }],
+    lat: 10.115,
+    lng: 76.476,
+    scannedAt: 'Today, 1:05pm',
+  },
+  {
+    id: 'sh8-chalakudy',
+    roadName: 'SH 8',
+    segment: 'Chalakudy river bridge',
+    issue: 'Water over the approach road. Passable for high vehicles.',
+    confidence: 0.55,
+    status: 'limited',
+    confirmations: [
+      { id: 'c7', name: 'KSRTC driver', time: '2 hr ago' },
+      { id: 'c8', name: 'Camp volunteer', time: '2 hr ago' },
+    ],
+    lat: 10.298,
+    lng: 76.334,
+    scannedAt: 'Yesterday, 6:20pm',
+  },
+  {
+    id: 'punnamada-rd',
+    roadName: 'Punnamada Road',
+    segment: 'Finishing point stretch',
+    issue: 'Clear after pumping. Traffic moving both ways.',
+    confidence: 0.74,
+    status: 'available',
+    confirmations: [{ id: 'c9', name: 'Alappuzha Fire', time: '3 hr ago' }],
+    lat: 9.51,
+    lng: 76.348,
+    scannedAt: 'Yesterday, 11:10am',
+  },
+];
+
+export function getRoadReport(id) {
+  return ROAD_REPORTS.find((item) => item.id === id) || ROAD_REPORTS[0];
+}

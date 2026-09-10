@@ -14,5 +14,5 @@ export default function Index() {
     return () => clearTimeout(timer);
   }, [navigationState?.key, router]);
 
-  return <SplashView />;
+  return <SplashView fontsReady />;
 }

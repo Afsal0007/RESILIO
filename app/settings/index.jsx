@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
-import { Link, useRouter } from 'expo-router';
+import { ScrollView, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
-import Header from '@/components/layout/Header';
+import { FONT } from '@/theme/tokens';
 import ScreenContainer from '@/components/layout/ScreenContainer';
+import Header from '@/components/layout/Header';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
 
 export default function Settings() {
   const router = useRouter();
@@ -23,53 +26,50 @@ export default function Settings() {
   return (
     <ScreenContainer>
       <Header title="Settings" showBack />
-      <View className="flex-1 p-4">
-        <Text className="text-xl font-bold">Settings</Text>
-        <Text className="mb-6 text-sm text-gray-500">app/settings/index</Text>
-
+      <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 32 }}>
         {isAuthenticated ? (
-          <View className="mb-6 rounded-xl border border-gray-200 p-4">
-            <Text className="text-base font-semibold text-gray-900">{user?.name}</Text>
-            <Text className="text-sm text-gray-500">{user?.email}</Text>
-            <Text className="mt-1 text-sm text-brand">{user?.role}</Text>
-          </View>
+          <Card variant="browse" className="mb-4">
+            <Text className="text-[16px] text-ink" style={{ fontFamily: FONT.bold }}>
+              {user?.name}
+            </Text>
+            <Text className="mt-1 text-[13px] text-ink/70" style={{ fontFamily: FONT.regular }}>
+              {user?.email}
+            </Text>
+            <Text className="mt-1 text-[13px] text-backwater" style={{ fontFamily: FONT.semibold }}>
+              {user?.role?.replace(/_/g, ' ')}
+            </Text>
+          </Card>
         ) : (
-          <Text className="mb-6 text-sm text-gray-600">You are browsing as a guest.</Text>
+          <Text className="mb-4 text-[14px] text-ink/80" style={{ fontFamily: FONT.regular }}>
+            You are browsing as a guest.
+          </Text>
         )}
 
-        <Link href="/settings/privacy" asChild>
-          <Pressable className="mb-3 rounded-xl border border-gray-200 px-4 py-3">
-            <Text className="font-medium text-gray-900">Privacy</Text>
-          </Pressable>
-        </Link>
+        <Card variant="browse" className="mb-3" onPress={() => router.push('/settings/privacy')}>
+          <Text className="text-[15px] text-ink" style={{ fontFamily: FONT.semibold }}>
+            Privacy
+          </Text>
+        </Card>
+        <Card variant="browse" className="mb-3" onPress={() => router.push('/help')}>
+          <Text className="text-[15px] text-ink" style={{ fontFamily: FONT.semibold }}>
+            Help
+          </Text>
+        </Card>
+        <Card variant="browse" className="mb-5" onPress={() => router.push('/profile/locations')}>
+          <Text className="text-[15px] text-ink" style={{ fontFamily: FONT.semibold }}>
+            Saved locations
+          </Text>
+        </Card>
 
         {isAuthenticated ? (
-          <Pressable
-            className="items-center rounded-xl bg-status-red py-3"
-            onPress={onLogout}
-            disabled={loggingOut}
-          >
-            {loggingOut ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text className="font-semibold text-white">Log Out</Text>
-            )}
-          </Pressable>
+          <Button label="Log Out" variant="danger" loading={loggingOut} onPress={onLogout} />
         ) : (
-          <View className="gap-3">
-            <Link href="/login" asChild>
-              <Pressable className="items-center rounded-xl bg-brand py-3">
-                <Text className="font-semibold text-white">Login</Text>
-              </Pressable>
-            </Link>
-            <Link href="/signup" asChild>
-              <Pressable className="items-center rounded-xl border border-brand py-3">
-                <Text className="font-semibold text-brand">Sign Up</Text>
-              </Pressable>
-            </Link>
+          <View style={{ gap: 12 }}>
+            <Button label="Login" onPress={() => router.push('/login')} />
+            <Button label="Sign Up" variant="secondary" onPress={() => router.push('/signup')} />
           </View>
         )}
-      </View>
+      </ScrollView>
     </ScreenContainer>
   );
 }

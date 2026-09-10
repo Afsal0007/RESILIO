@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import { useEffect } from 'react';
 import { usePathname, useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import { COLORS } from '@/theme/tokens';
 
 export default function ProtectedRoute({ children }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -20,8 +21,8 @@ export default function ProtectedRoute({ children }) {
 
   if (isLoading || !isAuthenticated) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator color="#0ea5e9" />
+      <View className="flex-1 items-center justify-center bg-paper">
+        <ActivityIndicator color={COLORS.backwater} />
       </View>
     );
   }

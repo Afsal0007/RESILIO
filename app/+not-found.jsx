@@ -1,18 +1,22 @@
-import { Link, Stack } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { FONT } from '@/theme/tokens';
+import Button from '@/components/ui/Button';
+import ScreenContainer from '@/components/layout/ScreenContainer';
 
 export default function NotFoundScreen() {
+  const router = useRouter();
+
   return (
-    <>
-      <Stack.Screen options={{ title: 'Not found' }} />
-      <View className="flex-1 items-center justify-center bg-white p-6">
-        <Text className="text-xl font-bold">This screen doesn&apos;t exist.</Text>
-        <Link href="/home" asChild>
-          <Pressable className="mt-4">
-            <Text className="text-brand">Go to Home</Text>
-          </Pressable>
-        </Link>
+    <ScreenContainer>
+      <View className="flex-1 items-center justify-center px-6">
+        <Text className="text-center text-[20px] text-ink" style={{ fontFamily: FONT.extrabold }}>
+          This screen does not exist.
+        </Text>
+        <View className="mt-5 w-full">
+          <Button label="Go to Home" onPress={() => router.replace('/home')} />
+        </View>
       </View>
-    </>
+    </ScreenContainer>
   );
 }

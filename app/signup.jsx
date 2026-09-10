@@ -1,26 +1,21 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { ROLE_LIST, getRoleIcon, isVerificationRequired } from '@/constants/roles';
 import { getSafeRedirect } from '@/components/auth/redirect';
-import Header from '@/components/layout/Header';
+import { FONT } from '@/theme/tokens';
 import ScreenContainer from '@/components/layout/ScreenContainer';
-import TextField from '@/components/forms/TextField';
+import Header from '@/components/layout/Header';
+import Input from '@/components/ui/Input';
+import Button from '@/components/ui/Button';
+import IconTile from '@/components/ui/IconTile';
+import SectionHeading from '@/components/ui/SectionHeading';
 
 export default function Signup() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { signUp } = useAuth();
-
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,7 +24,6 @@ export default function Signup() {
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-
   const intended = getSafeRedirect(params.redirect);
 
   const validate = () => {
@@ -64,100 +58,46 @@ export default function Signup() {
 
   return (
     <ScreenContainer>
-      <Header title="Sign Up" showBack />
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <Header title="Sign up" variant="status" showBack />
+      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView className="flex-1 px-4 py-4" keyboardShouldPersistTaps="handled">
-          <Text className="mb-1 text-2xl font-bold text-gray-900">Create account</Text>
-          <Text className="mb-6 text-sm text-gray-500">
+          <Text className="text-[22px] text-ink" style={{ fontFamily: FONT.extrabold }}>
+            Create account
+          </Text>
+          <Text className="mb-5 mt-1 text-[14px] text-ink/70" style={{ fontFamily: FONT.regular }}>
             Choose how you want to help during floods and landslides.
           </Text>
-
           {formError ? (
-            <Text className="mb-4 text-sm text-status-red">{formError}</Text>
+            <Text className="mb-3 text-[13px] text-laterite" style={{ fontFamily: FONT.medium }}>
+              {formError}
+            </Text>
           ) : null}
-
-          <TextField
-            label="Name"
-            value={name}
-            onChangeText={setName}
-            placeholder="Your full name"
-            autoCapitalize="words"
-            error={errors.name}
-          />
-          <TextField
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="you@email.com"
-            keyboardType="email-address"
-            error={errors.email}
-          />
-          <TextField
-            label="Password"
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Create a password"
-            secureTextEntry
-            error={errors.password}
-          />
-          <TextField
-            label="Confirm password"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            placeholder="Repeat password"
-            secureTextEntry
-            error={errors.confirmPassword}
-          />
-
-          <Text className="mb-2 text-sm font-medium text-gray-700">Role</Text>
-          {errors.role ? <Text className="mb-2 text-xs text-status-red">{errors.role}</Text> : null}
-
+          <Input label="Name" value={name} onChangeText={setName} placeholder="Your full name" autoCapitalize="words" error={errors.name} />
+          <Input label="Email" value={email} onChangeText={setEmail} placeholder="you@email.com" keyboardType="email-address" error={errors.email} />
+          <Input label="Password" value={password} onChangeText={setPassword} placeholder="Create a password" secureTextEntry error={errors.password} />
+          <Input label="Confirm password" value={confirmPassword} onChangeText={setConfirmPassword} placeholder="Repeat password" secureTextEntry error={errors.confirmPassword} />
+          <SectionHeading>Role</SectionHeading>
+          {errors.role ? (
+            <Text className="mb-2 text-[12px] text-laterite" style={{ fontFamily: FONT.medium }}>
+              {errors.role}
+            </Text>
+          ) : null}
           <View className="flex-row flex-wrap justify-between">
-            {ROLE_LIST.map((item) => {
-              const Icon = getRoleIcon(item.icon);
-              const selected = role === item.id;
-              return (
-                <Pressable
-                  key={item.id}
-                  onPress={() => setRole(item.id)}
-                  className={`mb-3 w-[31%] items-center rounded-xl border p-3 ${
-                    selected ? 'border-brand bg-sky-50' : 'border-gray-200 bg-white'
-                  }`}
-                >
-                  <Icon color={selected ? '#0ea5e9' : '#64748b'} size={22} />
-                  <Text
-                    className={`mt-2 text-center text-xs font-semibold ${
-                      selected ? 'text-brand' : 'text-gray-700'
-                    }`}
-                  >
-                    {item.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
+            {ROLE_LIST.map((item) => (
+              <IconTile
+                key={item.id}
+                icon={getRoleIcon(item.icon)}
+                label={item.label}
+                selected={role === item.id}
+                onPress={() => setRole(item.id)}
+              />
+            ))}
           </View>
-
-          <Pressable
-            className="mt-2 items-center rounded-xl bg-brand py-3"
-            onPress={onSubmit}
-            disabled={submitting}
-          >
-            {submitting ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text className="font-semibold text-white">Create account</Text>
-            )}
-          </Pressable>
-
+          <Button label="Create account" onPress={onSubmit} loading={submitting} />
           <Link href={{ pathname: '/login', params: { redirect: intended } }} asChild>
-            <Pressable className="mt-4 items-center py-2">
-              <Text className="text-sm text-gray-600">
-                Already have an account? <Text className="font-semibold text-brand">Login</Text>
-              </Text>
-            </Pressable>
+            <Text className="mt-4 text-center text-[13px] text-ink/70" style={{ fontFamily: FONT.regular, minHeight: 44, paddingTop: 12 }}>
+              Already have an account? <Text className="text-backwater" style={{ fontFamily: FONT.semibold }}>Login</Text>
+            </Text>
           </Link>
         </ScrollView>
       </KeyboardAvoidingView>

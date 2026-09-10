@@ -1,45 +1,138 @@
-import { Link } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Camera, LayoutDashboard, Map, Siren, HeartHandshake, Settings } from 'lucide-react-native';
+import { useAuth } from '@/context/AuthContext';
 import { useApp } from '@/context/AppContext';
+import { CAMPS } from '@/mock-data/camps';
+import { ALERTS } from '@/mock-data/alerts';
+import { COLORS, FONT, RADIUS } from '@/theme/tokens';
+import ScreenContainer from '@/components/layout/ScreenContainer';
+import Header from '@/components/layout/Header';
+import SectionHeading from '@/components/ui/SectionHeading';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+import CampCard from '@/components/cards/CampCard';
+
+const QUICK_LINKS = [
+  { label: 'RoadScan', href: '/roadscan', Icon: Camera },
+  { label: 'Map', href: '/map', Icon: Map },
+  { label: 'Volunteer', href: '/volunteer/dashboard', Icon: HeartHandshake },
+  { label: 'Dashboard', href: '/dashboard', Icon: LayoutDashboard },
+];
 
 export default function Home() {
-  const { showLoginPrompt } = useApp();
+  const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
+  const { setHelpMode, showLoginPrompt } = useApp();
+  const nearest = CAMPS[0];
+  const alert = ALERTS[0];
+  const greeting = isAuthenticated ? `Hello, ${user.name.split(' ')[0]}` : 'Hello';
 
   return (
-    <View className="flex-1 bg-white p-4">
-      <Text className="text-xl font-bold">Home</Text>
-      <Text className="text-sm text-gray-500">app/(tabs)/home</Text>
-
-      <Pressable
-        className="mt-6 items-center rounded-xl bg-status-red py-3"
-        onPress={() =>
-          showLoginPrompt({
-            intendedRoute: '/sos',
-            actionLabel: 'send an SOS request',
-          })
+    <ScreenContainer>
+      <Header
+        title="RESILIO"
+        rightAction={
+          <Pressable
+            onPress={() => router.push('/settings')}
+            className="items-center justify-center"
+            style={{ width: 44, height: 44 }}
+          >
+            <Settings color={COLORS.ink} size={22} />
+          </Pressable>
         }
-      >
-        <Text className="font-semibold text-white">Send SOS</Text>
-      </Pressable>
+      />
+      <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 24 }}>
+        <Text className="mt-1 text-[15px] text-ink/70" style={{ fontFamily: FONT.medium }}>
+          {greeting}. Kerala disaster support.
+        </Text>
 
-      <View className="mt-6 flex-row flex-wrap">
-        {[
-          ['Login', '/login'],
-          ['Sign up', '/signup'],
-          ['Settings', '/settings'],
-          ['Role select', '/role-select'],
-          ['Camps', '/camps'],
-          ['Resources', '/resources'],
-          ['Facilities', '/facilities'],
-          ['Dashboard', '/dashboard'],
-        ].map(([label, href]) => (
-          <Link key={href} href={href} asChild>
-            <Pressable className="mb-2 mr-2 rounded-full border border-gray-200 px-3 py-2">
-              <Text className="text-sm text-gray-700">{label}</Text>
+        <View className="mt-5 flex-row" style={{ gap: 12 }}>
+          <Pressable
+            onPress={async () => {
+              await setHelpMode('need');
+              router.push('/camps');
+            }}
+            className="flex-1 bg-backwater px-3 py-4"
+            style={{ borderRadius: RADIUS.soft, minHeight: 108 }}
+          >
+            <Siren color={COLORS.paper} size={22} />
+            <Text className="mt-3 text-[16px] text-paper" style={{ fontFamily: FONT.bold }}>
+              I Need Help
+            </Text>
+            <Text className="mt-1 text-[12px] text-paper/80" style={{ fontFamily: FONT.regular }}>
+              Camps, SOS, and open roads
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={async () => {
+              await setHelpMode('give');
+              router.push('/volunteer/join');
+            }}
+            className="flex-1 bg-monsoon px-3 py-4"
+            style={{ borderRadius: RADIUS.soft, minHeight: 108 }}
+          >
+            <HeartHandshake color={COLORS.paper} size={22} />
+            <Text className="mt-3 text-[16px] text-paper" style={{ fontFamily: FONT.bold }}>
+              I Can Help
+            </Text>
+            <Text className="mt-1 text-[12px] text-paper/80" style={{ fontFamily: FONT.regular }}>
+              Skills, boats, and supplies
+            </Text>
+          </Pressable>
+        </View>
+
+        {alert ? (
+          <Card
+            variant="alert"
+            status="unavailable"
+            className="mt-5"
+            onPress={() => router.push('/notifications')}
+          >
+            <Text className="text-[14px] text-ink" style={{ fontFamily: FONT.bold }}>
+              {alert.title}
+            </Text>
+            <Text className="mt-1 text-[13px] text-ink/80" style={{ fontFamily: FONT.regular }}>
+              {alert.body}
+            </Text>
+          </Card>
+        ) : null}
+
+        <View className="mt-6">
+          <SectionHeading>Nearest camp</SectionHeading>
+          <CampCard camp={nearest} onPress={() => router.push(`/camps/${nearest.id}`)} />
+        </View>
+
+        <SectionHeading>Quick links</SectionHeading>
+        <View className="flex-row flex-wrap" style={{ gap: 12 }}>
+          {QUICK_LINKS.map((item) => (
+            <Pressable
+              key={item.href}
+              onPress={() => router.push(item.href)}
+              className="items-center justify-center bg-paper-dim"
+              style={{ width: '47%', minHeight: 72, borderRadius: RADIUS.soft }}
+            >
+              <item.Icon color={COLORS.backwater} size={20} />
+              <Text className="mt-1 text-[13px] text-ink" style={{ fontFamily: FONT.semibold }}>
+                {item.label}
+              </Text>
             </Pressable>
-          </Link>
-        ))}
-      </View>
-    </View>
+          ))}
+        </View>
+
+        <View className="mt-6">
+          <Button
+            label="Send SOS"
+            variant="danger"
+            onPress={() =>
+              showLoginPrompt({
+                intendedRoute: '/sos',
+                actionLabel: 'send an SOS request',
+              })
+            }
+          />
+        </View>
+      </ScrollView>
+    </ScreenContainer>
   );
 }

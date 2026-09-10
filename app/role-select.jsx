@@ -1,9 +1,12 @@
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { HeartHandshake, SkipForward, Siren } from 'lucide-react-native';
+import { HeartHandshake, Siren } from 'lucide-react-native';
+import { COLORS, FONT } from '@/theme/tokens';
 import { useApp } from '@/context/AppContext';
-import Header from '@/components/layout/Header';
 import ScreenContainer from '@/components/layout/ScreenContainer';
+import Header from '@/components/layout/Header';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
 
 export default function RoleSelect() {
   const router = useRouter();
@@ -17,41 +20,37 @@ export default function RoleSelect() {
   return (
     <ScreenContainer>
       <Header title="How can we help?" />
-      <View className="flex-1 px-4 py-6">
-        <Text className="text-2xl font-bold text-gray-900">Choose a home view</Text>
-        <Text className="mt-2 mb-6 text-sm text-gray-500">
-          This is only a UI preference. It does not change your account or permissions.
+      <View className="flex-1 px-4 pt-4">
+        <Text className="mb-4 text-[14px] text-ink/80" style={{ fontFamily: FONT.regular }}>
+          This only changes the home view. It is not your account role.
         </Text>
-
-        <Pressable
-          className="mb-3 flex-row items-center rounded-2xl border border-gray-200 p-4"
-          onPress={() => choose('need')}
-        >
-          <Siren color="#0ea5e9" size={28} />
-          <View className="ml-3 flex-1">
-            <Text className="text-base font-semibold text-gray-900">I Need Help</Text>
-            <Text className="text-sm text-gray-500">Show nearby camps, alerts, and SOS first.</Text>
+        <Card variant="browse" className="mb-3" onPress={() => choose('need')}>
+          <View className="flex-row items-center">
+            <Siren color={COLORS.backwater} size={26} />
+            <View className="ml-3 flex-1">
+              <Text className="text-[16px] text-ink" style={{ fontFamily: FONT.bold }}>
+                I Need Help
+              </Text>
+              <Text className="mt-1 text-[13px] text-ink/70" style={{ fontFamily: FONT.regular }}>
+                Camps, alerts, and SOS first.
+              </Text>
+            </View>
           </View>
-        </Pressable>
-
-        <Pressable
-          className="mb-3 flex-row items-center rounded-2xl border border-gray-200 p-4"
-          onPress={() => choose('give')}
-        >
-          <HeartHandshake color="#0ea5e9" size={28} />
-          <View className="ml-3 flex-1">
-            <Text className="text-base font-semibold text-gray-900">I Can Help</Text>
-            <Text className="text-sm text-gray-500">Show volunteer and resource actions first.</Text>
+        </Card>
+        <Card variant="browse" className="mb-6" onPress={() => choose('give')}>
+          <View className="flex-row items-center">
+            <HeartHandshake color={COLORS.monsoon} size={26} />
+            <View className="ml-3 flex-1">
+              <Text className="text-[16px] text-ink" style={{ fontFamily: FONT.bold }}>
+                I Can Help
+              </Text>
+              <Text className="mt-1 text-[13px] text-ink/70" style={{ fontFamily: FONT.regular }}>
+                Volunteer and resource actions first.
+              </Text>
+            </View>
           </View>
-        </Pressable>
-
-        <Pressable
-          className="mt-4 flex-row items-center justify-center py-3"
-          onPress={() => choose(null)}
-        >
-          <SkipForward color="#64748b" size={18} />
-          <Text className="ml-2 font-medium text-gray-500">Skip, I&apos;m just browsing</Text>
-        </Pressable>
+        </Card>
+        <Button label="Skip, I'm just browsing" variant="ghost" onPress={() => choose(null)} />
       </View>
     </ScreenContainer>
   );
