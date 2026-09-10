@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { Camera, LayoutDashboard, Map, Siren, HeartHandshake, Settings } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useApp } from '@/context/AppContext';
+import useGuardedAction from '@/hooks/useGuardedAction';
 import { CAMPS } from '@/mock-data/camps';
 import { ALERTS } from '@/mock-data/alerts';
 import { COLORS, FONT, RADIUS } from '@/theme/tokens';
@@ -23,7 +24,8 @@ const QUICK_LINKS = [
 export default function Home() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
-  const { setHelpMode, showLoginPrompt } = useApp();
+  const { setHelpMode } = useApp();
+  const requireAuth = useGuardedAction();
   const nearest = CAMPS[0];
   const alert = ALERTS[0];
   const greeting = isAuthenticated ? `Hello, ${user.name.split(' ')[0]}` : 'Hello';
@@ -67,7 +69,7 @@ export default function Home() {
           <Pressable
             onPress={async () => {
               await setHelpMode('give');
-              router.push('/volunteer/join');
+              requireAuth('/volunteer/join', 'join as a volunteer');
             }}
             className="flex-1 bg-monsoon px-3 py-4"
             style={{ borderRadius: RADIUS.soft, minHeight: 108 }}
@@ -108,7 +110,17 @@ export default function Home() {
           {QUICK_LINKS.map((item) => (
             <Pressable
               key={item.href}
-              onPress={() => router.push(item.href)}
+              onPress={() => {
+                if (item.href === '/roadscan') {
+                  requireAuth('/roadscan', 'scan a road');
+                  return;
+                }
+                if (item.href === '/volunteer/dashboard') {
+                  requireAuth('/volunteer/dashboard', 'open the volunteer desk');
+                  return;
+                }
+                router.push(item.href);
+              }}
               className="items-center justify-center bg-paper-dim"
               style={{ width: '47%', minHeight: 72, borderRadius: RADIUS.soft }}
             >
@@ -124,12 +136,7 @@ export default function Home() {
           <Button
             label="Send SOS"
             variant="danger"
-            onPress={() =>
-              showLoginPrompt({
-                intendedRoute: '/sos',
-                actionLabel: 'send an SOS request',
-              })
-            }
+            onPress={() => requireAuth('/sos', 'send an SOS request')}
           />
         </View>
       </ScrollView>

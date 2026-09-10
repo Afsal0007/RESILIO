@@ -12,7 +12,7 @@ import Button from '@/components/ui/Button';
 
 export default function VolunteerDashboard() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
 
   return (
     <ScreenContainer>
@@ -20,13 +20,13 @@ export default function VolunteerDashboard() {
       <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 24 }}>
         <Card variant="browse" className="mt-1">
           <Text className="text-[16px] text-ink" style={{ fontFamily: FONT.bold }}>
-            {isAuthenticated ? user.name : 'Guest volunteer'}
+            {user.name}
           </Text>
           <Text className="mt-1 text-[13px] text-ink/70" style={{ fontFamily: FONT.regular }}>
-            {isAuthenticated ? user.role.replace(/_/g, ' ') : 'Log in to take assignments'}
+            {user.role.replace(/_/g, ' ')}
           </Text>
           <View className="mt-3 flex-row" style={{ gap: 8 }}>
-            <StatusBadge status={isAuthenticated && user.verified ? 'available' : 'limited'} label={isAuthenticated && user.verified ? 'Verified' : 'Unverified'} />
+            <StatusBadge status={user.verified ? 'available' : 'limited'} label={user.verified ? 'Verified' : 'Unverified'} />
           </View>
         </Card>
 

@@ -1,6 +1,8 @@
 import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Bell, Camera, HeartHandshake, House, Map } from 'lucide-react-native';
+import { useAuth } from '@/context/AuthContext';
+import { useApp } from '@/context/AppContext';
 import { COLORS, FONT, RADIUS } from '@/theme/tokens';
 
 const ICONS = {
@@ -11,8 +13,15 @@ const ICONS = {
   notifications: Bell,
 };
 
+const GUARDED_TABS = {
+  roadscan: { intendedRoute: '/roadscan', actionLabel: 'scan a road' },
+  volunteer: { intendedRoute: '/volunteer/dashboard', actionLabel: 'open the volunteer desk' },
+};
+
 export default function BottomNav({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
+  const { isAuthenticated } = useAuth();
+  const { showLoginPrompt } = useApp();
 
   return (
     <View
@@ -33,6 +42,12 @@ export default function BottomNav({ state, descriptors, navigation }) {
         const color = isFocused ? COLORS.backwater : COLORS.ink;
 
         const onPress = () => {
+          const guard = GUARDED_TABS[route.name];
+          if (guard && !isAuthenticated) {
+            showLoginPrompt(guard);
+            return;
+          }
+
           const event = navigation.emit({
             type: 'tabPress',
             target: route.key,

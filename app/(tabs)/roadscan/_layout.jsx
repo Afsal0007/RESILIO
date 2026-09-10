@@ -1,13 +1,10 @@
-import { Redirect, Stack, usePathname } from 'expo-router';
-import { useAuth } from '@/context/AuthContext';
+import { Stack } from 'expo-router';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 export default function RoadScanLayout() {
-  const { isAuthenticated, isLoading } = useAuth();
-  const pathname = usePathname();
-
-  if (!isLoading && !isAuthenticated) {
-    return <Redirect href={{ pathname: '/login', params: { redirect: pathname } }} />;
-  }
-
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <ProtectedRoute>
+      <Stack screenOptions={{ headerShown: false }} />
+    </ProtectedRoute>
+  );
 }

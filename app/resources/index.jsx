@@ -3,6 +3,7 @@ import { ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Package } from 'lucide-react-native';
 import { RESOURCE_CATEGORIES, RESOURCES } from '@/mock-data/resources';
+import useGuardedAction from '@/hooks/useGuardedAction';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
 import EmptyState from '@/components/layout/EmptyState';
@@ -12,6 +13,7 @@ import ResourceCard from '@/components/cards/ResourceCard';
 
 export default function Resources() {
   const router = useRouter();
+  const requireAuth = useGuardedAction();
   const [category, setCategory] = useState('All');
   const items =
     category === 'All' ? RESOURCES : RESOURCES.filter((item) => item.category === category);
@@ -36,7 +38,10 @@ export default function Resources() {
             />
           ))}
           <View className="mt-2">
-            <Button label="Offer a resource" onPress={() => router.push('/resources/offer')} />
+            <Button
+              label="Offer a resource"
+              onPress={() => requireAuth('/resources/offer', 'offer a resource')}
+            />
           </View>
         </ScrollView>
       )}

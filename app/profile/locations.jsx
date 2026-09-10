@@ -1,8 +1,8 @@
 import { ScrollView, Text } from 'react-native';
-import { useRouter } from 'expo-router';
 import { MapPin } from 'lucide-react-native';
 import { SAVED_LOCATIONS } from '@/mock-data/profile';
 import { FONT } from '@/theme/tokens';
+import useGuardedAction from '@/hooks/useGuardedAction';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
 import EmptyState from '@/components/layout/EmptyState';
@@ -10,7 +10,8 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 
 export default function Locations() {
-  const router = useRouter();
+  const requireAuth = useGuardedAction();
+  const addLocation = () => requireAuth('/profile/location-add', 'add a location');
 
   return (
     <ScreenContainer>
@@ -20,7 +21,7 @@ export default function Locations() {
           icon={MapPin}
           message="No saved places yet."
           actionLabel="Add a location"
-          onAction={() => router.push('/profile/location-add')}
+          onAction={addLocation}
         />
       ) : (
         <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 24 }}>
@@ -34,7 +35,7 @@ export default function Locations() {
               </Text>
             </Card>
           ))}
-          <Button label="Add a location" onPress={() => router.push('/profile/location-add')} />
+          <Button label="Add a location" onPress={addLocation} />
         </ScrollView>
       )}
     </ScreenContainer>

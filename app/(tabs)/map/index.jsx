@@ -7,6 +7,7 @@ import { RESOURCES } from '@/mock-data/resources';
 import { ROAD_REPORTS } from '@/mock-data/road-reports';
 import { VOLUNTEER_TASKS } from '@/mock-data/volunteers';
 import { FONT } from '@/theme/tokens';
+import useGuardedAction from '@/hooks/useGuardedAction';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import MapPlaceholder from '@/components/map/MapPlaceholder';
 import Chip from '@/components/ui/Chip';
@@ -20,6 +21,7 @@ const LAYERS = ['Camps', 'Hospitals', 'Roads', 'Volunteers', 'Resources'];
 
 export default function MapScreen() {
   const router = useRouter();
+  const requireAuth = useGuardedAction();
   const [layer, setLayer] = useState('Camps');
 
   return (
@@ -89,7 +91,7 @@ export default function MapScreen() {
               : null}
             {layer === 'Volunteers'
               ? VOLUNTEER_TASKS.map((task) => (
-                  <Card key={task.id} variant="browse" className="mb-3" onPress={() => router.push('/volunteer/dashboard')}>
+                  <Card key={task.id} variant="browse" className="mb-3" onPress={() => requireAuth('/volunteer/dashboard', 'open the volunteer desk')}>
                     <View className="flex-row items-start justify-between">
                       <Text className="flex-1 pr-3 text-[15px] text-ink" style={{ fontFamily: FONT.bold }}>
                         {task.title}

@@ -54,6 +54,7 @@ export default function CampDetail() {
           ))}
         </View>
 
+        {/* TODO: camp "manage" actions (org admins editing capacity/needs) are not in this pass. Guard those screens when they are built. */}
         <Card variant="browse">
           <Text className="text-[13px] text-ink/70" style={{ fontFamily: FONT.medium }}>
             Warden

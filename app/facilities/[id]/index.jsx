@@ -1,7 +1,8 @@
 import { ScrollView, Text, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { getFacility } from '@/mock-data/facilities';
 import { FONT } from '@/theme/tokens';
+import useGuardedAction from '@/hooks/useGuardedAction';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
 import Card from '@/components/ui/Card';
@@ -11,7 +12,7 @@ import Button from '@/components/ui/Button';
 
 export default function FacilityDetail() {
   const { id } = useLocalSearchParams();
-  const router = useRouter();
+  const requireAuth = useGuardedAction();
   const facility = getFacility(id);
 
   return (
@@ -45,7 +46,16 @@ export default function FacilityDetail() {
           ))}
         </View>
 
-        <Button label="Request support" onPress={() => router.push(`/facilities/${facility.id}/request`)} />
+        {/* TODO: facility "manage" actions (org admins editing needs lists) are not in this pass. Guard those screens when they are built. */}
+        <Button
+          label="Request support"
+          onPress={() =>
+            requireAuth(
+              `/facilities/${facility.id}/request`,
+              'post an urgent need'
+            )
+          }
+        />
       </ScrollView>
     </ScreenContainer>
   );
