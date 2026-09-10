@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { AppProvider } from '@/context/AppContext';
+import { CampsProvider } from '@/services/campsStore';
 import { COLORS } from '@/theme/tokens';
 import SplashView from '@/components/layout/SplashView';
 
@@ -23,7 +24,9 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <AppProvider>
-        <RootNavigation />
+        <CampsProvider>
+          <RootNavigation />
+        </CampsProvider>
       </AppProvider>
     </AuthProvider>
   );

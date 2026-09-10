@@ -113,3 +113,7 @@ export function getRoleIcon(iconName) {
 export function isVerificationRequired(roleId) {
   return VERIFICATION_REQUIRED_ROLES.includes(roleId);
 }
+
+export function isOrganizationRole(roleId) {
+  return roleId === NGO_ORGANIZATION.id || roleId === RESOURCE_PROVIDER.id;
+}

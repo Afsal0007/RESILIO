@@ -3,6 +3,8 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { VOLUNTEER_TASKS } from '@/mock-data/volunteers';
 import { FONT } from '@/theme/tokens';
+import { isOrganizationRole } from '@/constants/roles';
+import { useCamps } from '@/services/campsStore';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
 import Card from '@/components/ui/Card';
@@ -13,6 +15,10 @@ import Button from '@/components/ui/Button';
 export default function VolunteerDashboard() {
   const router = useRouter();
   const { user } = useAuth();
+  const { camps } = useCamps();
+  const ownedCamps = isOrganizationRole(user?.role)
+    ? camps.filter((camp) => camp.ownerId === user.id)
+    : [];
 
   return (
     <ScreenContainer>
@@ -29,6 +35,32 @@ export default function VolunteerDashboard() {
             <StatusBadge status={user.verified ? 'available' : 'limited'} label={user.verified ? 'Verified' : 'Unverified'} />
           </View>
         </Card>
+
+        {ownedCamps.length > 0 ? (
+          <View className="mt-6">
+            <SectionHeading>My organization</SectionHeading>
+            {ownedCamps.map((camp) => (
+              <Card
+                key={camp.id}
+                variant="browse"
+                className="mb-3"
+                onPress={() => router.push(`/camps/${camp.id}/manage`)}
+              >
+                <View className="flex-row items-start justify-between">
+                  <View className="flex-1 pr-3">
+                    <Text className="text-[15px] text-ink" style={{ fontFamily: FONT.bold }}>
+                      {camp.name}
+                    </Text>
+                    <Text className="mt-1 text-[12px] text-ink/70" style={{ fontFamily: FONT.medium }}>
+                      {camp.occupied}/{camp.capacity} people
+                    </Text>
+                  </View>
+                  <StatusBadge status={camp.status} />
+                </View>
+              </Card>
+            ))}
+          </View>
+        ) : null}
 
         <View className="mt-6">
           <SectionHeading>Assigned tasks</SectionHeading>

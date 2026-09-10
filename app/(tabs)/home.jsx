@@ -4,7 +4,7 @@ import { Camera, LayoutDashboard, Map, Siren, HeartHandshake, Settings } from 'l
 import { useAuth } from '@/context/AuthContext';
 import { useApp } from '@/context/AppContext';
 import useGuardedAction from '@/hooks/useGuardedAction';
-import { CAMPS } from '@/mock-data/camps';
+import { useCamps } from '@/services/campsStore';
 import { ALERTS } from '@/mock-data/alerts';
 import { COLORS, FONT, RADIUS } from '@/theme/tokens';
 import ScreenContainer from '@/components/layout/ScreenContainer';
@@ -26,7 +26,8 @@ export default function Home() {
   const { user, isAuthenticated } = useAuth();
   const { setHelpMode } = useApp();
   const requireAuth = useGuardedAction();
-  const nearest = CAMPS[0];
+  const { camps } = useCamps();
+  const nearest = [...camps].sort((a, b) => (a.distanceKm ?? 999) - (b.distanceKm ?? 999))[0];
   const alert = ALERTS[0];
   const greeting = isAuthenticated ? `Hello, ${user.name.split(' ')[0]}` : 'Hello';
 
@@ -100,10 +101,12 @@ export default function Home() {
           </Card>
         ) : null}
 
-        <View className="mt-6">
-          <SectionHeading>Nearest camp</SectionHeading>
-          <CampCard camp={nearest} onPress={() => router.push(`/camps/${nearest.id}`)} />
-        </View>
+        {nearest ? (
+          <View className="mt-6">
+            <SectionHeading>Nearest camp</SectionHeading>
+            <CampCard camp={nearest} onPress={() => router.push(`/camps/${nearest.id}`)} />
+          </View>
+        ) : null}
 
         <SectionHeading>Quick links</SectionHeading>
         <View className="flex-row flex-wrap" style={{ gap: 12 }}>

@@ -1,15 +1,16 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { CAMPS } from '@/mock-data/camps';
 import { FACILITIES } from '@/mock-data/facilities';
 import { RESOURCES } from '@/mock-data/resources';
 import { ROAD_REPORTS } from '@/mock-data/road-reports';
 import { VOLUNTEER_TASKS } from '@/mock-data/volunteers';
-import { FONT } from '@/theme/tokens';
+import { FONT, STATUS_HEX } from '@/theme/tokens';
+import { useCamps, campPinStatus } from '@/services/campsStore';
 import useGuardedAction from '@/hooks/useGuardedAction';
+import { KERALA_REGION } from '@/hooks/useUserLocation';
 import ScreenContainer from '@/components/layout/ScreenContainer';
-import MapPlaceholder from '@/components/map/MapPlaceholder';
+import ResilioMap from '@/components/map/ResilioMap';
 import Chip from '@/components/ui/Chip';
 import Card from '@/components/ui/Card';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -22,12 +23,44 @@ const LAYERS = ['Camps', 'Hospitals', 'Roads', 'Volunteers', 'Resources'];
 export default function MapScreen() {
   const router = useRouter();
   const requireAuth = useGuardedAction();
+  const { camps } = useCamps();
   const [layer, setLayer] = useState('Camps');
+
+  const markers = useMemo(() => {
+    if (layer === 'Camps') {
+      return camps
+        .filter((camp) => camp.lat != null && camp.lng != null)
+        .map((camp) => ({
+          id: camp.id,
+          title: camp.name,
+          coordinate: { latitude: camp.lat, longitude: camp.lng },
+          pinColor: STATUS_HEX[campPinStatus(camp)],
+          onPress: () => router.push(`/camps/${camp.id}`),
+        }));
+    }
+    if (layer === 'Roads') {
+      return ROAD_REPORTS.filter((report) => report.lat != null && report.lng != null).map((report) => ({
+        id: report.id,
+        title: report.roadName,
+        coordinate: { latitude: report.lat, longitude: report.lng },
+        pinColor: STATUS_HEX[report.status],
+        onPress: () => router.push(`/reports/${report.id}`),
+      }));
+    }
+    return [];
+  }, [camps, layer, router]);
 
   return (
     <ScreenContainer>
       <View className="flex-1">
-        <MapPlaceholder />
+        <ResilioMap
+          initialRegion={KERALA_REGION}
+          centerOnUser
+          showsUserLocation
+          showRecenterButton
+          recenterBottom="48%"
+          markers={markers}
+        />
         <ScrollView
           horizontal
           className="absolute left-0 right-0 top-3 px-4"
@@ -44,7 +77,7 @@ export default function MapScreen() {
           </Text>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 16 }}>
             {layer === 'Camps'
-              ? CAMPS.slice(0, 4).map((camp) => (
+              ? camps.slice(0, 4).map((camp) => (
                   <CampCard key={camp.id} camp={camp} onPress={() => router.push(`/camps/${camp.id}`)} />
                 ))
               : null}

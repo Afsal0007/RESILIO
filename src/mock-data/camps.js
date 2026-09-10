@@ -15,6 +15,7 @@ export const CAMPS = [
     medical: 'limited',
     contact: '0484-2628100',
     warden: 'Sunitha K.',
+    verified: true,
   },
   {
     id: 'camp-chalakudy',
@@ -32,6 +33,7 @@ export const CAMPS = [
     medical: 'limited',
     contact: '0480-2701122',
     warden: 'Fr. Jose Palayoor',
+    verified: true,
   },
   {
     id: 'camp-idukki',
@@ -49,6 +51,7 @@ export const CAMPS = [
     medical: 'unavailable',
     contact: '0486-2233400',
     warden: 'Ramesh Nair',
+    verified: true,
   },
   {
     id: 'camp-kalpetta',
@@ -66,6 +69,7 @@ export const CAMPS = [
     medical: 'available',
     contact: '0493-6202211',
     warden: 'Fathima Beevi',
+    verified: true,
   },
   {
     id: 'camp-alappuzha',
@@ -83,6 +87,7 @@ export const CAMPS = [
     medical: 'available',
     contact: '0477-2251515',
     warden: 'Anwar Hussain',
+    verified: true,
   },
   {
     id: 'camp-kozhikode',
@@ -100,6 +105,7 @@ export const CAMPS = [
     medical: 'available',
     contact: '0495-2361234',
     warden: 'Latha Menon',
+    verified: true,
   },
 ];
 
