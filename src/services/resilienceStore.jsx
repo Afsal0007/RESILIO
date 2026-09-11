@@ -346,28 +346,37 @@ export function ResilienceProvider({ children }) {
 
   const addRoadReport = useCallback(async (payload) => {
     // Stand-in for POST /road-reports
+    const confidenceValue = Number(payload.confidence);
+    const confidence = Number.isFinite(confidenceValue) ? Math.min(1, Math.max(0, confidenceValue)) : 0.4;
+    const latitude = payload.latitude ?? payload.lat ?? null;
+    const longitude = payload.longitude ?? payload.lng ?? null;
+    const label = payload.label || payload.detectedIssue || 'possible_disruption';
+    const source = payload.source || payload.aiAnalysis?.source || null;
     const report = {
       id: payload.id || `scan-${Date.now()}`,
       roadName: payload.roadName || 'RoadScan report',
-      segment: payload.segment || (payload.latitude == null ? 'Location unavailable' : 'Near your location'),
-      issue:
-        payload.issue ||
-        (payload.detectedIssue === 'possible_blockage'
-          ? 'Possible blockage detected. Awaiting community verification.'
-          : 'Possible flooding detected. Awaiting community verification.'),
-      confidence: payload.confidence ?? 0.4,
-      status: payload.status || statusFromConfidence(payload.confidence ?? 0.4),
+      segment: payload.segment || (latitude == null ? 'Location unavailable' : 'Near your location'),
       confirmations: payload.confirmations || [],
-      lat: payload.latitude ?? payload.lat ?? null,
-      lng: payload.longitude ?? payload.lng ?? null,
-      latitude: payload.latitude ?? payload.lat ?? null,
-      longitude: payload.longitude ?? payload.lng ?? null,
       scannedAt: payload.scannedAt || 'Just now',
-      capturedAt: payload.capturedAt || nowIso(),
-      evidenceUri: payload.evidenceUri || null,
-      detectedIssue: payload.detectedIssue || 'possible_flooding',
       zoneId: payload.zoneId || null,
       ...payload,
+      issue:
+        payload.issue ||
+        (label === 'possible_blockage'
+          ? 'Possible blockage detected. Awaiting community verification.'
+          : 'Possible flooding detected. Awaiting community verification.'),
+      status: payload.status || statusFromConfidence(confidence),
+      confidence,
+      latitude,
+      longitude,
+      lat: latitude,
+      lng: longitude,
+      capturedAt: payload.capturedAt || nowIso(),
+      evidenceUri: payload.evidenceUri || null,
+      detectedIssue: label,
+      label,
+      source,
+      aiAnalysis: payload.aiAnalysis || null,
     };
     dispatch({ type: 'ADD_ROAD_REPORT', report });
     return report;

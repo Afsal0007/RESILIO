@@ -8,10 +8,10 @@ import Card from '@/components/ui/Card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import Button from '@/components/ui/Button';
 
-function confidenceLabel(confidence) {
-  if (confidence >= 0.75) return 'High';
-  if (confidence >= 0.5) return 'Medium';
-  return 'Low';
+function confidencePercent(confidence) {
+  const numeric = Number(confidence);
+  if (!Number.isFinite(numeric)) return 0;
+  return Math.round(Math.min(1, Math.max(0, numeric)) * 100);
 }
 
 export default function RoadScanResult() {
@@ -37,6 +37,8 @@ export default function RoadScanResult() {
   const locationLabel =
     report.latitude == null || report.longitude == null ? 'Location unavailable' : report.segment;
   const timeLabel = report.scannedAt || report.capturedAt || 'Just now';
+  const source = report.source || report.aiAnalysis?.source;
+  const fallback = Boolean(report.aiAnalysis?.fallback);
 
   return (
     <ScreenContainer>
@@ -54,17 +56,25 @@ export default function RoadScanResult() {
           <View className="flex-row items-start justify-between">
             <View className="flex-1 pr-3">
               <Text className="text-[16px] text-ink" style={{ fontFamily: FONT.bold }}>
-                {report.roadName}
+                {report.issue || 'Uncertain observation from this photo.'}
               </Text>
-              <Text className="mt-1 text-[13px] text-ink/80" style={{ fontFamily: FONT.regular }}>
-                Possible flooding detected — AI confidence: {confidenceLabel(report.confidence)}, awaiting
-                community verification
+              <Text className="mt-2 text-[13px] text-ink/80" style={{ fontFamily: FONT.regular }}>
+                Possible observation · {confidencePercent(report.confidence)}% confidence
+                {source ? ` · ${source}` : ''}
               </Text>
+              <Text className="mt-1 text-[13px] text-ink/80" style={{ fontFamily: FONT.medium }}>
+                Community confirmation needed
+              </Text>
+              {fallback ? (
+                <Text className="mt-2 text-[12px] text-ink/70" style={{ fontFamily: FONT.regular }}>
+                  AI analysis was unavailable. This report is still an uncertain observation.
+                </Text>
+              ) : null}
               <Text className="mt-2 text-[12px] text-ink/70" style={{ fontFamily: FONT.medium }}>
                 {locationLabel} · {timeLabel}
               </Text>
             </View>
-            <StatusBadge status={report.status} />
+            <StatusBadge status={report.status} label="Possible observation" />
           </View>
         </Card>
         <Button className="mt-5" label="Open full report" onPress={() => router.push(`/reports/${report.id}`)} />
