@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useApp } from '@/context/AppContext';
 import useGuardedAction from '@/hooks/useGuardedAction';
 import { useCamps } from '@/services/campsStore';
-import { fetchCurrentWeather, HEAVY_RAIN_MM } from '@/services/weather';
+import { fetchCurrentWeather, fetchForecast, HEAVY_RAIN_MM } from '@/services/weather';
 import { KERALA_REGION, requestUserCoords } from '@/hooks/useUserLocation';
 import { sortCampsByNearest, withLiveDistance } from '@/utils/distance';
 import { ALERTS } from '@/mock-data/alerts';
@@ -17,6 +17,8 @@ import SectionHeading from '@/components/ui/SectionHeading';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import CampCard from '@/components/cards/CampCard';
+import WeatherButton from '@/components/ui/WeatherButton';
+import WeatherSheet from '@/components/ui/WeatherSheet';
 
 const QUICK_LINKS = [
   { label: 'RoadScan', href: '/roadscan', Icon: Camera },
@@ -32,6 +34,9 @@ export default function Home() {
   const requireAuth = useGuardedAction();
   const { camps } = useCamps();
   const [weather, setWeather] = useState(null);
+  const [forecast, setForecast] = useState(null);
+  const [weatherLoading, setWeatherLoading] = useState(Boolean(process.env.EXPO_PUBLIC_OWM_KEY));
+  const [weatherSheetOpen, setWeatherSheetOpen] = useState(false);
   const [userCoords, setUserCoords] = useState(null);
   const mockAlert = ALERTS[0];
   const heavyRain = weather && weather.rainLastHourMm > HEAVY_RAIN_MM;
@@ -45,15 +50,25 @@ export default function Home() {
     useCallback(() => {
       let active = true;
       (async () => {
-        const coords = await requestUserCoords();
-        if (active) setUserCoords(coords);
         try {
+          const coords = await requestUserCoords();
+          if (active) setUserCoords(coords);
           const lat = coords?.latitude ?? KERALA_REGION.latitude;
           const lng = coords?.longitude ?? KERALA_REGION.longitude;
-          const current = await fetchCurrentWeather(lat, lng);
-          if (active) setWeather(current);
+          const [current, upcoming] = await Promise.all([
+            fetchCurrentWeather(lat, lng),
+            fetchForecast(lat, lng),
+          ]);
+          if (!active) return;
+          setWeather(current);
+          setForecast(upcoming);
         } catch {
-          if (active) setWeather(null);
+          if (active) {
+            setWeather(null);
+            setForecast(null);
+          }
+        } finally {
+          if (active) setWeatherLoading(false);
         }
       })();
       return () => {
@@ -80,6 +95,11 @@ export default function Home() {
         <Text className="mt-1 text-[15px] text-ink/70" style={{ fontFamily: FONT.medium }}>
           {greeting}. Kerala disaster support.
         </Text>
+        <WeatherButton
+          current={weather}
+          loading={weatherLoading}
+          onPress={() => setWeatherSheetOpen(true)}
+        />
 
         <View className="mt-5 flex-row" style={{ gap: 12 }}>
           <Pressable
@@ -185,6 +205,12 @@ export default function Home() {
           />
         </View>
       </ScrollView>
+      <WeatherSheet
+        visible={weatherSheetOpen}
+        onClose={() => setWeatherSheetOpen(false)}
+        current={weather}
+        forecast={forecast}
+      />
     </ScreenContainer>
   );
 }
