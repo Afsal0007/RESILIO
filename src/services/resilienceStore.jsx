@@ -142,8 +142,16 @@ function bumpNeeds(needs, names, status) {
 
 function resilienceReducer(state, action) {
   switch (action.type) {
-    case 'HYDRATE':
-      return { ...createInitialState(), ...action.state, lastUpdated: action.state?.lastUpdated || nowIso() };
+    case 'HYDRATE': {
+      const next = { ...createInitialState(), ...action.state, lastUpdated: action.state?.lastUpdated || nowIso() };
+      const seedById = Object.fromEntries(RESOURCES.map((item) => [item.id, item]));
+      next.resources = (next.resources || []).map((resource) => ({
+        ...resource,
+        lat: resource.lat ?? seedById[resource.id]?.lat ?? null,
+        lng: resource.lng ?? seedById[resource.id]?.lng ?? null,
+      }));
+      return next;
+    }
     case 'ADD_ROAD_REPORT':
       return stamp(state, { roadReports: [action.report, ...state.roadReports] });
     case 'CONFIRM_ROAD_REPORT':

@@ -98,6 +98,15 @@ export default function MapScreen() {
         onPress: () => router.push(`/reports/${report.id}`),
       }));
     }
+    if (layer === 'Resources') {
+      return resources.filter((resource) => resource.lat != null && resource.lng != null).map((resource) => ({
+        id: resource.id,
+        title: resource.name,
+        coordinate: { latitude: resource.lat, longitude: resource.lng },
+        pinColor: STATUS_HEX[resource.status],
+        onPress: () => router.push(`/resources/${resource.id}`),
+      }));
+    }
     if (layer === 'Volunteers') {
       return volunteers
         .map((entry) => {
@@ -111,7 +120,7 @@ export default function MapScreen() {
         .filter(Boolean);
     }
     return [];
-  }, [camps, hospitals, layer, roadReports, router, volunteers]);
+  }, [camps, hospitals, layer, resources, roadReports, router, volunteers]);
 
   return (
     <ScreenContainer>
