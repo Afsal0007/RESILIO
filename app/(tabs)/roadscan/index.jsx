@@ -1,6 +1,7 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Camera } from 'lucide-react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { COLORS, FONT, RADIUS } from '@/theme/tokens';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
@@ -8,6 +9,42 @@ import Button from '@/components/ui/Button';
 
 export default function RoadScanCapture() {
   const router = useRouter();
+  const cameraRef = useRef(null);
+  const [permission, requestPermission] = useCameraPermissions();
+  const [isFocused, setIsFocused] = useState(true);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [capturing, setCapturing] = useState(false);
+
+  useEffect(() => {
+    if (permission?.status === 'undetermined') {
+      requestPermission();
+    }
+  }, [permission, requestPermission]);
+
+  useFocusEffect(
+    useCallback(() => {
+      setIsFocused(true);
+      return () => {
+        setIsFocused(false);
+        setCameraReady(false);
+      };
+    }, [])
+  );
+
+  const onCapture = async () => {
+    if (!permission?.granted || !cameraRef.current || !cameraReady || capturing) return;
+    setCapturing(true);
+    try {
+      const result = await cameraRef.current.takePictureAsync();
+      if (result?.uri) {
+        router.push({ pathname: '/roadscan/review', params: { photoUri: result.uri } });
+      }
+    } finally {
+      setCapturing(false);
+    }
+  };
+
+  const showCamera = Boolean(permission?.granted && isFocused);
 
   return (
     <ScreenContainer>
@@ -18,15 +55,28 @@ export default function RoadScanCapture() {
         </Text>
         <View
           className="mt-4 flex-1 items-center justify-center bg-ink"
-          style={{ borderRadius: RADIUS.soft }}
+          style={{ borderRadius: RADIUS.soft, overflow: 'hidden' }}
         >
-          <Camera color={COLORS.paper} size={40} />
-          <Text className="mt-3 text-paper" style={{ fontFamily: FONT.medium }}>
-            Camera preview
-          </Text>
+          {permission && !permission.granted ? (
+            <View className="items-center px-6">
+              <Text className="text-center text-paper" style={{ fontFamily: FONT.medium }}>
+                Camera access is needed to scan roads
+              </Text>
+              <View className="mt-4 w-full">
+                <Button label="Allow camera access" onPress={requestPermission} />
+              </View>
+            </View>
+          ) : showCamera ? (
+            <CameraView
+              ref={cameraRef}
+              facing="back"
+              style={{ flex: 1, width: '100%', height: '100%' }}
+              onCameraReady={() => setCameraReady(true)}
+            />
+          ) : null}
         </View>
         <Pressable
-          onPress={() => router.push('/roadscan/review')}
+          onPress={onCapture}
           className="mt-4 self-center items-center justify-center bg-paper"
           style={{
             width: 72,
