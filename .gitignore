@@ -30,9 +30,13 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# local env files (covers ai-server/.env — never commit Hugging Face tokens)
 .env
 .env*.local
+ai-server/.env
+ai-server/.venv/
+ai-server/__pycache__/
+__pycache__/
 
 # typescript
 *.tsbuildinfo
