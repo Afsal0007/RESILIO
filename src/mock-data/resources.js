@@ -1,6 +1,18 @@
-export const RESOURCE_CATEGORIES = ['All', 'Food', 'Water', 'Shelter', 'Medical', 'Transport', 'Boats'];
+export const RESOURCE_CATEGORIES = ['All', 'Food', 'Water', 'Shelter', 'Medical', 'Transport', 'Boats', 'Generator'];
 
 export const RESOURCES = [
+  {
+    id: 'res-generator',
+    name: 'Portable diesel generators',
+    category: 'Generator',
+    quantity: 4,
+    unit: 'units',
+    status: 'available',
+    provider: 'Thrissur Electrical Guild',
+    location: 'Thrissur',
+    contact: '0487-2324411',
+    notes: '5 kVA. Fuel for eight hours included. Pickup from the guild yard.',
+  },
   {
     id: 'res-water-20l',
     name: 'Drinking water cans (20L)',

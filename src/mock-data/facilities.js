@@ -9,6 +9,7 @@ export const FACILITIES = [
     district: 'Alappuzha',
     contact: '0477-2250101',
     needs: [
+      { name: 'Generator', status: 'unavailable' },
       { name: 'Fuel for pumps', status: 'limited' },
       { name: 'Life jackets', status: 'available' },
     ],

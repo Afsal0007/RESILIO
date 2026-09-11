@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { getFacility } from '@/mock-data/facilities';
+import { mergeFacility, useResilience } from '@/services/resilienceStore';
 import { FONT } from '@/theme/tokens';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
@@ -12,7 +13,9 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 export default function FacilityRequest() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const facility = getFacility(id);
+  const facilityId = Array.isArray(id) ? id[0] : id;
+  const { facilityNeeds, facilityFlags } = useResilience();
+  const facility = mergeFacility(getFacility(facilityId), facilityNeeds, facilityFlags);
   const [item, setItem] = useState(facility?.needs?.[0]?.name || '');
   const [quantity, setQuantity] = useState('');
   const [notes, setNotes] = useState('');

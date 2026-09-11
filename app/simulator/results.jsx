@@ -1,11 +1,14 @@
+import { useEffect } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { FONT } from '@/theme/tokens';
+import { useResilience } from '@/services/resilienceStore';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
 import SectionHeading from '@/components/ui/SectionHeading';
 import Card from '@/components/ui/Card';
 import StatusBadge from '@/components/ui/StatusBadge';
+import Button from '@/components/ui/Button';
 
 const CHAIN = [
   { id: 'road', title: 'NH 66, Edapally', before: 'available', afterRain: 'limited', afterSlide: 'unavailable', note: 'Water on the carriageway, then a cut.' },
@@ -15,8 +18,15 @@ const CHAIN = [
 
 export default function SimulatorResults() {
   const { scenario } = useLocalSearchParams();
+  const { setScenario, scenarioState } = useResilience();
   const isSlide = scenario === 'slide';
   const afterKey = isSlide ? 'afterSlide' : 'afterRain';
+
+  useEffect(() => {
+    const next = isSlide ? 'landslide' : 'heavy_rain';
+    if (scenarioState === next) return;
+    setScenario(next);
+  }, [isSlide, scenarioState, setScenario]);
 
   return (
     <ScreenContainer>
@@ -47,6 +57,13 @@ export default function SimulatorResults() {
             </View>
           ))}
         </View>
+        <Button
+          className="mt-3"
+          variant="secondary"
+          label={scenarioState === 'recovering' ? 'Recovering…' : 'Recover to normal'}
+          disabled={scenarioState === 'normal' || scenarioState === 'recovering'}
+          onPress={() => setScenario('recovering')}
+        />
       </ScrollView>
     </ScreenContainer>
   );

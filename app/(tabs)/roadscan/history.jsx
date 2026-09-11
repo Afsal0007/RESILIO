@@ -1,8 +1,8 @@
 import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { FolderOpen } from 'lucide-react-native';
-import { ROAD_REPORTS } from '@/mock-data/road-reports';
 import { FONT } from '@/theme/tokens';
+import { useResilience } from '@/services/resilienceStore';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
 import EmptyState from '@/components/layout/EmptyState';
@@ -11,15 +11,22 @@ import StatusBadge from '@/components/ui/StatusBadge';
 
 export default function RoadScanHistory() {
   const router = useRouter();
+  const { roadReports } = useResilience();
+  const reports = [...roadReports].sort((a, b) => {
+    const aTime = Date.parse(a.capturedAt || '') || 0;
+    const bTime = Date.parse(b.capturedAt || '') || 0;
+    if (aTime !== bTime) return bTime - aTime;
+    return 0;
+  });
 
   return (
     <ScreenContainer>
       <Header title="Scan history" showBack />
-      {ROAD_REPORTS.length === 0 ? (
+      {reports.length === 0 ? (
         <EmptyState icon={FolderOpen} message="No scans yet. Capture a road to start the log." />
       ) : (
         <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 24 }}>
-          {ROAD_REPORTS.map((report) => (
+          {reports.map((report) => (
             <Card
               key={report.id}
               variant="browse"
@@ -32,7 +39,7 @@ export default function RoadScanHistory() {
                     {report.roadName}
                   </Text>
                   <Text className="mt-0.5 text-[13px] text-ink/70" style={{ fontFamily: FONT.regular }}>
-                    {report.segment} · {report.scannedAt}
+                    {report.latitude == null ? 'Location unavailable' : report.segment} · {report.scannedAt}
                   </Text>
                 </View>
                 <StatusBadge status={report.status} />

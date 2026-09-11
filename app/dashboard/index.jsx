@@ -1,6 +1,6 @@
 import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { DASHBOARD_STATS, ZONES } from '@/mock-data/dashboard';
+import { useDashboardStats, useDashboardZones } from '@/services/resilienceStore';
 import { FONT, STATUS_HEX } from '@/theme/tokens';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
@@ -10,13 +10,15 @@ import SectionHeading from '@/components/ui/SectionHeading';
 
 export default function Dashboard() {
   const router = useRouter();
+  const stats = useDashboardStats();
+  const zones = useDashboardZones();
 
   return (
     <ScreenContainer>
       <Header title="Dashboard" variant="status" showBack />
       <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 32 }}>
         <View className="mt-4 flex-row flex-wrap justify-between">
-          {DASHBOARD_STATS.map((stat) => (
+          {stats.map((stat) => (
             <View key={stat.id} className="mb-3" style={{ width: '48%' }}>
               <Card variant="alert" status={stat.status}>
                 <Text
@@ -33,7 +35,7 @@ export default function Dashboard() {
           ))}
         </View>
         <SectionHeading>Zones</SectionHeading>
-        {ZONES.map((zone) => (
+        {zones.map((zone) => (
           <Card
             key={zone.id}
             variant="alert"

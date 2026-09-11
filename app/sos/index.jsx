@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SOS_TYPES } from '@/mock-data/sos';
+import { useResilience } from '@/services/resilienceStore';
 import { FONT } from '@/theme/tokens';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
@@ -19,9 +20,11 @@ const PRIORITIES = [
 
 export default function Sos() {
   const router = useRouter();
+  const { createSosCase } = useResilience();
   const [type, setType] = useState('flood');
   const [priority, setPriority] = useState('unavailable');
   const [location, setLocation] = useState('Near Aluva jetty, Ernakulam');
+  const [sending, setSending] = useState(false);
 
   return (
     <ScreenContainer>
@@ -54,7 +57,27 @@ export default function Sos() {
           </Card>
         ))}
         <Input label="Location" value={location} onChangeText={setLocation} autoCapitalize="words" />
-        <Button label="Send SOS" variant="danger" onPress={() => router.push('/sos/sos-kainakary/status')} />
+        <Button
+          label="Send SOS"
+          variant="danger"
+          loading={sending}
+          onPress={async () => {
+            if (sending) return;
+            setSending(true);
+            try {
+              const selected = SOS_TYPES.find((item) => item.id === type);
+              const sos = await createSosCase({
+                type: selected?.label || 'Flooded home',
+                priority,
+                status: priority,
+                location,
+              });
+              router.push(`/sos/${sos.id}/status`);
+            } finally {
+              setSending(false);
+            }
+          }}
+        />
       </ScrollView>
     </ScreenContainer>
   );

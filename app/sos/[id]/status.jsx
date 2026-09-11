@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { getSos } from '@/mock-data/sos';
+import { useResilience } from '@/services/resilienceStore';
 import { FONT } from '@/theme/tokens';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
@@ -11,7 +11,22 @@ import SectionHeading from '@/components/ui/SectionHeading';
 
 export default function SosStatus() {
   const { id } = useLocalSearchParams();
-  const sos = getSos(id);
+  const { getSos } = useResilience();
+  const sosId = Array.isArray(id) ? id[0] : id;
+  const sos = getSos(sosId);
+
+  if (!sos) {
+    return (
+      <ScreenContainer>
+        <Header title="SOS status" showBack />
+        <View className="flex-1 px-4 pt-2">
+          <Text className="text-[15px] text-ink/70" style={{ fontFamily: FONT.medium }}>
+            This SOS is no longer listed.
+          </Text>
+        </View>
+      </ScreenContainer>
+    );
+  }
 
   return (
     <ScreenContainer>

@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { getFacility } from '@/mock-data/facilities';
 import { FONT } from '@/theme/tokens';
 import useGuardedAction from '@/hooks/useGuardedAction';
+import { matchingResources, mergeFacility, useResilience } from '@/services/resilienceStore';
+import { getFacility } from '@/mock-data/facilities';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
 import Card from '@/components/ui/Card';
@@ -13,7 +15,10 @@ import Button from '@/components/ui/Button';
 export default function FacilityDetail() {
   const { id } = useLocalSearchParams();
   const requireAuth = useGuardedAction();
-  const facility = getFacility(id);
+  const { facilityNeeds, facilityFlags, resources, matchResourceToNeed } = useResilience();
+  const facilityId = Array.isArray(id) ? id[0] : id;
+  const facility = mergeFacility(getFacility(facilityId), facilityNeeds, facilityFlags);
+  const [findingNeedId, setFindingNeedId] = useState(null);
 
   if (!facility) {
     return (
@@ -27,6 +32,11 @@ export default function FacilityDetail() {
       </ScreenContainer>
     );
   }
+
+  const matches = matchingResources(
+    resources,
+    facility.needs.find((need) => need.id === findingNeedId)
+  );
 
   return (
     <ScreenContainer>
@@ -44,22 +54,71 @@ export default function FacilityDetail() {
             label={facility.urgency === 'unavailable' ? 'Urgent need' : undefined}
           />
         </View>
+        {facility.alternativeRoute ? (
+          <Text className="mt-3 text-[13px] text-ink/80" style={{ fontFamily: FONT.medium }}>
+            Alternative route advised for this site.
+          </Text>
+        ) : null}
 
         <View className="mt-6">
           <SectionHeading>Urgent needs</SectionHeading>
           {facility.needs.map((need) => (
-            <Card key={need.name} variant="alert" status={need.status} className="mb-3">
+            <Card key={need.id || need.name} variant="alert" status={need.status} className="mb-3">
               <View className="flex-row items-center justify-between">
                 <Text className="text-[15px] text-ink" style={{ fontFamily: FONT.semibold }}>
-                  {need.name}
+                  {need.matchStatus === 'in_progress'
+                    ? `${need.name} — matched, delivery in progress`
+                    : need.name}
                 </Text>
-                <StatusBadge status={need.status} />
+                <StatusBadge
+                  status={need.status}
+                  label={need.matchStatus === 'in_progress' ? 'In progress' : undefined}
+                />
               </View>
+              {need.status === 'unavailable' && need.matchStatus !== 'in_progress' ? (
+                <Button
+                  className="mt-3"
+                  size="small"
+                  variant="secondary"
+                  label={findingNeedId === need.id ? 'Hide matches' : 'Find a Match'}
+                  onPress={() => setFindingNeedId(findingNeedId === need.id ? null : need.id)}
+                />
+              ) : null}
             </Card>
           ))}
         </View>
 
-        {/* TODO: facility "manage" actions (org admins editing needs lists) are not in this pass. Guard those screens when they are built. */}
+        {findingNeedId ? (
+          <View className="mb-5">
+            <SectionHeading>Available matches</SectionHeading>
+            {matches.length === 0 ? (
+              <Text className="mb-3 text-[14px] text-ink/70" style={{ fontFamily: FONT.regular }}>
+                No available resource matches this need yet.
+              </Text>
+            ) : (
+              matches.map((resource) => (
+                <Card key={resource.id} variant="browse" className="mb-3">
+                  <Text className="text-[15px] text-ink" style={{ fontFamily: FONT.semibold }}>
+                    {resource.name}
+                  </Text>
+                  <Text className="mt-1 text-[13px] text-ink/70" style={{ fontFamily: FONT.regular }}>
+                    {resource.quantity} {resource.unit} · {resource.provider}
+                  </Text>
+                  <Button
+                    className="mt-3"
+                    size="small"
+                    label="Request This"
+                    onPress={async () => {
+                      await matchResourceToNeed(resource.id, findingNeedId);
+                      setFindingNeedId(null);
+                    }}
+                  />
+                </Card>
+              ))
+            )}
+          </View>
+        ) : null}
+
         <Button
           label="Request support"
           onPress={() =>

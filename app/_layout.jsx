@@ -5,6 +5,7 @@ import { useFonts } from 'expo-font';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { AppProvider } from '@/context/AppContext';
 import { CampsProvider } from '@/services/campsStore';
+import { ResilienceProvider } from '@/services/resilienceStore';
 import { COLORS } from '@/theme/tokens';
 import SplashView from '@/components/layout/SplashView';
 
@@ -25,7 +26,9 @@ export default function RootLayout() {
     <AuthProvider>
       <AppProvider>
         <CampsProvider>
-          <RootNavigation />
+          <ResilienceProvider>
+            <RootNavigation />
+          </ResilienceProvider>
         </CampsProvider>
       </AppProvider>
     </AuthProvider>

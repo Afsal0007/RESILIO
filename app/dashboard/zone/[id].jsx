@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { getZone } from '@/mock-data/dashboard';
+import { useDashboardZones } from '@/services/resilienceStore';
 import { FONT } from '@/theme/tokens';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
@@ -10,7 +10,22 @@ import SectionHeading from '@/components/ui/SectionHeading';
 
 export default function ZoneDashboard() {
   const { id } = useLocalSearchParams();
-  const zone = getZone(id);
+  const zones = useDashboardZones();
+  const zoneId = Array.isArray(id) ? id[0] : id;
+  const zone = zones.find((item) => item.id === zoneId);
+
+  if (!zone) {
+    return (
+      <ScreenContainer>
+        <Header title="Zone" variant="status" showBack />
+        <View className="flex-1 px-4 pt-4">
+          <Text className="text-[15px] text-ink/70" style={{ fontFamily: FONT.medium }}>
+            This zone is no longer listed.
+          </Text>
+        </View>
+      </ScreenContainer>
+    );
+  }
 
   return (
     <ScreenContainer>

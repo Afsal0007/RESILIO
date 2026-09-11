@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import { Image, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FONT, RADIUS } from '@/theme/tokens';
+import { requestUserCoords } from '@/hooks/useUserLocation';
+import { useResilience } from '@/services/resilienceStore';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
 import Button from '@/components/ui/Button';
@@ -9,6 +12,36 @@ export default function RoadScanReview() {
   const router = useRouter();
   const { photoUri } = useLocalSearchParams();
   const uri = Array.isArray(photoUri) ? photoUri[0] : photoUri;
+  const { addRoadReport } = useResilience();
+  const [submitting, setSubmitting] = useState(false);
+
+  const onSubmit = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      const coords = await requestUserCoords();
+      const capturedAt = new Date().toISOString();
+      const report = await addRoadReport({
+        evidenceUri: uri || null,
+        latitude: coords?.latitude ?? null,
+        longitude: coords?.longitude ?? null,
+        capturedAt,
+        detectedIssue: 'possible_flooding',
+        confidence: 0.4,
+        status: 'limited',
+        confirmations: [],
+        scannedAt: 'Just now',
+        roadName: 'RoadScan report',
+        segment: coords ? 'Near your location' : 'Location unavailable',
+      });
+      router.replace({
+        pathname: '/roadscan/result',
+        params: { reportId: report.id },
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <ScreenContainer>
@@ -28,15 +61,7 @@ export default function RoadScanReview() {
           Submit this frame if the water, debris, or closure is clear. Retake if the road is cut off.
         </Text>
         <View className="mt-5" style={{ gap: 12 }}>
-          <Button
-            label="Submit report"
-            onPress={() =>
-              router.replace({
-                pathname: '/roadscan/result',
-                params: uri ? { photoUri: uri } : undefined,
-              })
-            }
-          />
+          <Button label="Submit report" loading={submitting} onPress={onSubmit} />
           <Button label="Retake" variant="secondary" onPress={() => router.replace('/roadscan')} />
         </View>
       </View>

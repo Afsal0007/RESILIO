@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { RESOURCES } from '@/mock-data/resources';
-import { ROAD_REPORTS } from '@/mock-data/road-reports';
 import { VOLUNTEER_TASKS } from '@/mock-data/volunteers';
 import { COLORS, FONT, STATUS_HEX } from '@/theme/tokens';
 import { useCamps, campPinStatus } from '@/services/campsStore';
+import { useResilience } from '@/services/resilienceStore';
 import { fetchNearbyHospitals } from '@/services/osm';
 import useGuardedAction from '@/hooks/useGuardedAction';
 import { KERALA_REGION, requestUserCoords } from '@/hooks/useUserLocation';
@@ -26,6 +25,7 @@ export default function MapScreen() {
   const router = useRouter();
   const requireAuth = useGuardedAction();
   const { camps } = useCamps();
+  const { roadReports, resources } = useResilience();
   const nearbyCamps = useSortedCamps(camps);
   const [layer, setLayer] = useState('Camps');
   const [osmHospitals, setOsmHospitals] = useState([]);
@@ -85,7 +85,7 @@ export default function MapScreen() {
         }));
     }
     if (layer === 'Roads') {
-      return ROAD_REPORTS.filter((report) => report.lat != null && report.lng != null).map((report) => ({
+      return roadReports.filter((report) => report.lat != null && report.lng != null).map((report) => ({
         id: report.id,
         title: report.roadName,
         coordinate: { latitude: report.lat, longitude: report.lng },
@@ -94,7 +94,7 @@ export default function MapScreen() {
       }));
     }
     return [];
-  }, [camps, hospitals, layer, router]);
+  }, [camps, hospitals, layer, roadReports, router]);
 
   return (
     <ScreenContainer>
@@ -157,7 +157,7 @@ export default function MapScreen() {
               </Text>
             ) : null}
             {layer === 'Resources'
-              ? RESOURCES.slice(0, 4).map((resource) => (
+              ? resources.slice(0, 4).map((resource) => (
                   <ResourceCard
                     key={resource.id}
                     resource={resource}
@@ -166,7 +166,7 @@ export default function MapScreen() {
                 ))
               : null}
             {layer === 'Roads'
-              ? ROAD_REPORTS.map((report) => (
+              ? roadReports.map((report) => (
                   <Card
                     key={report.id}
                     variant="alert"
@@ -180,7 +180,7 @@ export default function MapScreen() {
                           {report.roadName}
                         </Text>
                         <Text className="mt-0.5 text-[13px] text-ink/70" style={{ fontFamily: FONT.regular }}>
-                          {report.segment}
+                          {report.latitude == null && report.lat == null ? 'Location unavailable' : report.segment}
                         </Text>
                       </View>
                       <StatusBadge status={report.status} />

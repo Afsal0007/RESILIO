@@ -1,6 +1,6 @@
 import { ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { getRoadReport } from '@/mock-data/road-reports';
+import { useResilience } from '@/services/resilienceStore';
 import { FONT } from '@/theme/tokens';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
@@ -12,7 +12,23 @@ import Button from '@/components/ui/Button';
 export default function Infrastructure() {
   const { roadId } = useLocalSearchParams();
   const router = useRouter();
-  const report = getRoadReport(roadId);
+  const { getRoadReport } = useResilience();
+  const id = Array.isArray(roadId) ? roadId[0] : roadId;
+  const report = getRoadReport(id);
+
+  if (!report) {
+    return (
+      <ScreenContainer>
+        <Header title="Road" showBack />
+        <View className="h-48">
+          <MapPlaceholder />
+        </View>
+        <Text className="px-4 pt-4 text-[15px] text-ink/70" style={{ fontFamily: FONT.medium }}>
+          This road is no longer listed.
+        </Text>
+      </ScreenContainer>
+    );
+  }
 
   return (
     <ScreenContainer>

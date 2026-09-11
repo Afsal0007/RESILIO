@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Package } from 'lucide-react-native';
-import { RESOURCE_CATEGORIES, RESOURCES } from '@/mock-data/resources';
+import { RESOURCE_CATEGORIES } from '@/mock-data/resources';
+import { useResilience } from '@/services/resilienceStore';
 import useGuardedAction from '@/hooks/useGuardedAction';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
@@ -14,9 +15,10 @@ import ResourceCard from '@/components/cards/ResourceCard';
 export default function Resources() {
   const router = useRouter();
   const requireAuth = useGuardedAction();
+  const { resources } = useResilience();
   const [category, setCategory] = useState('All');
   const items =
-    category === 'All' ? RESOURCES : RESOURCES.filter((item) => item.category === category);
+    category === 'All' ? resources : resources.filter((item) => item.category === category);
 
   return (
     <ScreenContainer>
