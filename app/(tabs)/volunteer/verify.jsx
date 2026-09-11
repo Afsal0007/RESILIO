@@ -1,34 +1,57 @@
+import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Upload } from 'lucide-react-native';
-import { COLORS, FONT, RADIUS } from '@/theme/tokens';
+import { FONT } from '@/theme/tokens';
+import { useAuth } from '@/context/AuthContext';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
 import Button from '@/components/ui/Button';
-import Card from '@/components/ui/Card';
+import PhotoPicker from '@/components/ui/PhotoPicker';
 
 export default function VolunteerVerify() {
   const router = useRouter();
+  const { submitVerification } = useAuth();
+  const [uri, setUri] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const onSubmit = async () => {
+    if (!uri || submitting) {
+      setError(uri ? '' : 'Add an ID or licence photo first.');
+      return;
+    }
+    setSubmitting(true);
+    setError('');
+    try {
+      await submitVerification(uri);
+      router.replace('/volunteer/dashboard');
+    } catch (err) {
+      setError(err?.message || 'Could not submit the photo. Try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <ScreenContainer>
       <Header title="Verify credentials" showBack />
       <View className="flex-1 px-4 pt-2">
         <Text className="mb-4 text-[14px] text-ink/80" style={{ fontFamily: FONT.regular }}>
-          Medical, rescue, electrician, and technician roles need a licence or ID photo. This upload is a placeholder.
+          Medical, rescue, electrician, and technician roles need a licence or ID photo. Take a photo or choose one from your library, then submit for review.
         </Text>
-        <Card variant="browse">
-          <View
-            className="items-center justify-center bg-paper py-8"
-            style={{ borderRadius: RADIUS.sharp, minHeight: 140 }}
-          >
-            <Upload color={COLORS.backwater} size={28} />
-            <Text className="mt-3 text-[14px] text-ink" style={{ fontFamily: FONT.semibold }}>
-              Tap to add ID or licence
-            </Text>
-          </View>
-        </Card>
-        <Button className="mt-5" label="Submit for review" onPress={() => router.replace('/volunteer/dashboard')} />
+        <PhotoPicker value={uri} onChange={(next) => { setUri(next); setError(''); }} />
+        {error ? (
+          <Text className="mt-3 text-[13px] text-laterite" style={{ fontFamily: FONT.medium }}>
+            {error}
+          </Text>
+        ) : null}
+        <Button
+          className="mt-5"
+          label="Submit for review"
+          disabled={!uri}
+          loading={submitting}
+          onPress={onSubmit}
+        />
         <Button className="mt-3" variant="ghost" label="Skip for now" onPress={() => router.replace('/volunteer/dashboard')} />
       </View>
     </ScreenContainer>

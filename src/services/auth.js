@@ -22,7 +22,25 @@ function notify() {
 function toPublicUser(user) {
   if (!user) return null;
   const { password, ...publicUser } = user;
-  return publicUser;
+  const verificationStatus =
+    publicUser.verificationStatus || (publicUser.verified ? 'verified' : 'unverified');
+  return {
+    ...publicUser,
+    verificationStatus,
+    verificationDocUri: publicUser.verificationDocUri || null,
+    verified: verificationStatus === 'verified' || Boolean(publicUser.verified && verificationStatus !== 'pending'),
+  };
+}
+
+export function verificationDisplay(user) {
+  if (!user) return { status: 'limited', label: 'Unverified' };
+  if (user.verified && user.verificationStatus !== 'pending') {
+    return { status: 'available', label: 'Verified' };
+  }
+  if (user.verificationStatus === 'pending') {
+    return { status: 'limited', label: 'Pending verification' };
+  }
+  return { status: 'limited', label: 'Unverified' };
 }
 
 function normalizeEmail(email) {
@@ -102,6 +120,8 @@ export async function signUp({ name, email, password, role }) {
     password,
     role,
     verified: !isVerificationRequired(role),
+    verificationStatus: isVerificationRequired(role) ? 'unverified' : 'verified',
+    verificationDocUri: null,
   };
 
   users.push(user);
@@ -172,6 +192,26 @@ export async function demoLogin(role) {
   await persistSession(user);
   notify();
   return toPublicUser(user);
+}
+
+export async function updateCurrentUser(patch) {
+  await ensureInit();
+  if (!currentUser) {
+    throw new Error('Not signed in.');
+  }
+  currentUser = { ...currentUser, ...patch };
+  users = users.map((user) => (user.id === currentUser.id ? currentUser : user));
+  await persistUsers();
+  notify();
+  return toPublicUser(currentUser);
+}
+
+export async function submitVerification(uri) {
+  return updateCurrentUser({
+    verificationDocUri: uri,
+    verificationStatus: 'pending',
+    verified: false,
+  });
 }
 
 export async function getCurrentUser() {

@@ -8,5 +8,7 @@ export function getDemoUsers() {
     password: 'demo123',
     role: role.id,
     verified: true,
+    verificationStatus: 'verified',
+    verificationDocUri: null,
   }));
 }

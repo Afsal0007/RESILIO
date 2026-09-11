@@ -16,7 +16,18 @@ function etaMinutes(km) {
   return Math.max(1, Math.round((km / 20) * 60));
 }
 
-export default function ExactResponderLocation({ taskKey, requesterId, fallbackVolunteerId }) {
+function asCoords(lat, lng) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  return { lat, lng };
+}
+
+export default function ExactResponderLocation({
+  taskKey,
+  requesterId,
+  fallbackVolunteerId,
+  fallbackCoords,
+  volunteerName,
+}) {
   const { user } = useAuth();
   const { getPresence, getAcceptedVolunteerId } = useVolunteerPresence();
   const [viewerCoords, setViewerCoords] = useState(null);
@@ -26,6 +37,9 @@ export default function ExactResponderLocation({ taskKey, requesterId, fallbackV
   const canSeeExact = Boolean(
     user?.id && volunteerId && (user.id === requesterId || user.id === volunteerId)
   );
+
+  const pin = asCoords(presence?.lat, presence?.lng) || asCoords(fallbackCoords?.lat, fallbackCoords?.lng);
+  const live = Boolean(presence?.onDuty && asCoords(presence?.lat, presence?.lng));
 
   useEffect(() => {
     if (!canSeeExact) return undefined;
@@ -39,27 +53,38 @@ export default function ExactResponderLocation({ taskKey, requesterId, fallbackV
   }, [canSeeExact]);
 
   const distanceKm = useMemo(() => {
-    if (!viewerCoords || !presence || presence.lat == null || presence.lng == null) return null;
-    return roundKm(haversineKm(viewerCoords.latitude, viewerCoords.longitude, presence.lat, presence.lng));
-  }, [presence, viewerCoords]);
+    if (!viewerCoords || !pin) return null;
+    return roundKm(haversineKm(viewerCoords.latitude, viewerCoords.longitude, pin.lat, pin.lng));
+  }, [pin, viewerCoords]);
 
-  if (!canSeeExact) return null;
+  if (!canSeeExact) {
+    if (volunteerId) {
+      return (
+        <View className="mt-6">
+          <SectionHeading>Responder location</SectionHeading>
+          <Text className="text-[14px] text-ink/70" style={{ fontFamily: FONT.regular }}>
+            {volunteerName || 'A volunteer'} is assigned. Exact location is visible to the requester and the matched volunteer.
+          </Text>
+        </View>
+      );
+    }
+    return null;
+  }
 
-  const roleLabel = ROLES[presence?.role]?.label || 'Assigned volunteer';
-  const live = Boolean(presence?.onDuty && Number.isFinite(presence.lat) && Number.isFinite(presence.lng));
+  const roleLabel = volunteerName || ROLES[presence?.role]?.label || 'Assigned volunteer';
   const minutes = etaMinutes(distanceKm);
 
   return (
     <View className="mt-6">
       <SectionHeading>Responder location</SectionHeading>
-      {live ? (
+      {pin ? (
         <>
           <View className="overflow-hidden" style={{ height: 180, borderRadius: RADIUS.soft }}>
             <ResilioMap
               style={{ height: 180 }}
               initialRegion={{
-                latitude: presence.lat,
-                longitude: presence.lng,
+                latitude: pin.lat,
+                longitude: pin.lng,
                 latitudeDelta: 0.02,
                 longitudeDelta: 0.02,
               }}
@@ -67,7 +92,7 @@ export default function ExactResponderLocation({ taskKey, requesterId, fallbackV
                 {
                   id: `exact-${volunteerId}`,
                   title: `${roleLabel} en route`,
-                  coordinate: { latitude: presence.lat, longitude: presence.lng },
+                  coordinate: { latitude: pin.lat, longitude: pin.lng },
                   pinColor: '#B23A2E',
                 },
               ]}
@@ -77,7 +102,7 @@ export default function ExactResponderLocation({ taskKey, requesterId, fallbackV
             <View className="flex-row items-start justify-between">
               <View className="flex-1 pr-3">
                 <Text className="text-[15px] text-ink" style={{ fontFamily: FONT.semibold }}>
-                  {roleLabel} · live location
+                  {roleLabel} · {live ? 'live location' : 'last known location'}
                 </Text>
                 <Text className="mt-1 text-[13px] text-ink/70" style={{ fontFamily: FONT.regular }}>
                   {distanceKm != null
@@ -85,13 +110,13 @@ export default function ExactResponderLocation({ taskKey, requesterId, fallbackV
                     : 'Exact coordinates shared because this request is already matched.'}
                 </Text>
               </View>
-              <StatusBadge status="available" label="En route" />
+              <StatusBadge status="available" label={live ? 'En route' : 'Assigned'} />
             </View>
           </Card>
         </>
       ) : (
         <Text className="text-[14px] text-ink/70" style={{ fontFamily: FONT.regular }}>
-          The assigned responder will appear here with an exact location once they are on duty.
+          {roleLabel} is assigned. Their pin appears here as soon as a location fix is available.
         </Text>
       )}
     </View>

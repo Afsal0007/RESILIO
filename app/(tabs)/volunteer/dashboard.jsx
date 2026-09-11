@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ScrollView, Switch, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -6,7 +6,9 @@ import { useAuth } from '@/context/AuthContext';
 import { VOLUNTEER_TASKS } from '@/mock-data/volunteers';
 import { COLORS, FONT } from '@/theme/tokens';
 import { isDutySharingRole, isOrganizationRole } from '@/constants/roles';
+import { verificationDisplay } from '@/services/auth';
 import { useCamps } from '@/services/campsStore';
+import { toInboxItems, useResilience } from '@/services/resilienceStore';
 import { useVolunteerPresence } from '@/services/volunteerPresenceStore';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
@@ -44,10 +46,16 @@ export default function VolunteerDashboard() {
   const router = useRouter();
   const { user } = useAuth();
   const { camps } = useCamps();
+  const { sosCases, facilityRequests } = useResilience();
+  const incoming = useMemo(
+    () => toInboxItems(sosCases, facilityRequests).slice(0, 4),
+    [sosCases, facilityRequests]
+  );
   const { presence, setOnDuty } = useVolunteerPresence();
   const [toggling, setToggling] = useState(false);
   const [showConsent, setShowConsent] = useState(false);
   const canShareDuty = isDutySharingRole(user?.role);
+  const verification = verificationDisplay(user);
   const onDuty = Boolean(presence[user?.id]?.onDuty);
   const ownedCamps = isOrganizationRole(user?.role)
     ? camps.filter((camp) => camp.ownerId === user.id)
@@ -92,7 +100,7 @@ export default function VolunteerDashboard() {
             {user.role.replace(/_/g, ' ')}
           </Text>
           <View className="mt-3 flex-row" style={{ gap: 8 }}>
-            <StatusBadge status={user.verified ? 'available' : 'limited'} label={user.verified ? 'Verified' : 'Unverified'} />
+            <StatusBadge status={verification.status} label={verification.label} />
           </View>
         </Card>
 
@@ -160,6 +168,46 @@ export default function VolunteerDashboard() {
         ) : null}
 
         <View className="mt-6">
+          <SectionHeading>Incoming requests</SectionHeading>
+          {incoming.length === 0 ? (
+            <Card variant="browse" className="mb-3" onPress={() => router.push('/requests')}>
+              <Text className="text-[15px] text-ink" style={{ fontFamily: FONT.bold }}>
+                Open request inbox
+              </Text>
+              <Text className="mt-1 text-[12px] text-ink/70" style={{ fontFamily: FONT.medium }}>
+                New SOS and facility asks appear here.
+              </Text>
+            </Card>
+          ) : (
+            incoming.map((request) => (
+              <Card
+                key={request.id}
+                variant="alert"
+                status={request.status}
+                className="mb-3"
+                onPress={() => router.push(`/requests/${request.id}`)}
+              >
+                <View className="flex-row items-start justify-between">
+                  <View className="flex-1 pr-3">
+                    <Text className="text-[15px] text-ink" style={{ fontFamily: FONT.bold }}>
+                      {request.title}
+                    </Text>
+                    <Text className="mt-1 text-[12px] text-ink/70" style={{ fontFamily: FONT.medium }}>
+                      {request.type} · {request.location}
+                    </Text>
+                  </View>
+                  <StatusBadge
+                    status={request.status}
+                    label={request.status === 'accepted' ? 'Volunteer assigned' : undefined}
+                  />
+                </View>
+              </Card>
+            ))
+          )}
+          <Button label="Open full inbox" variant="secondary" onPress={() => router.push('/requests')} />
+        </View>
+
+        <View className="mt-6">
           <SectionHeading>Assigned tasks</SectionHeading>
           {VOLUNTEER_TASKS.map((task) => (
             <Card key={task.id} variant="browse" className="mb-3" onPress={() => router.push('/requests')}>
@@ -178,7 +226,8 @@ export default function VolunteerDashboard() {
           ))}
         </View>
 
-        <Button label="Update skills" variant="secondary" onPress={() => router.push('/volunteer/join')} />
+        <Button label="Verify credentials" variant="secondary" onPress={() => router.push('/volunteer/verify')} />
+        <Button className="mt-3" label="Update skills" variant="ghost" onPress={() => router.push('/volunteer/join')} />
       </ScrollView>
     </ScreenContainer>
   );

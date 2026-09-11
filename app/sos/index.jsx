@@ -74,6 +74,7 @@ export default function Sos() {
                 status: priority,
                 location,
                 requesterId: user?.id || null,
+                requesterName: user?.name || 'Citizen SOS',
               });
               router.push(`/sos/${sos.id}/status`);
             } finally {

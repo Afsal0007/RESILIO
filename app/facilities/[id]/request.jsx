@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { getFacility } from '@/mock-data/facilities';
 import { mergeFacility, useResilience } from '@/services/resilienceStore';
 import { FONT } from '@/theme/tokens';
+import { useAuth } from '@/context/AuthContext';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
 import Input from '@/components/ui/Input';
@@ -13,12 +14,14 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 export default function FacilityRequest() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const { user } = useAuth();
   const facilityId = Array.isArray(id) ? id[0] : id;
-  const { facilityNeeds, facilityFlags } = useResilience();
+  const { facilityNeeds, facilityFlags, addFacilityRequest } = useResilience();
   const facility = mergeFacility(getFacility(facilityId), facilityNeeds, facilityFlags);
   const [item, setItem] = useState(facility?.needs?.[0]?.name || '');
   const [quantity, setQuantity] = useState('');
   const [notes, setNotes] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   if (!facility) {
     return (
@@ -33,6 +36,27 @@ export default function FacilityRequest() {
     );
   }
 
+  const onSend = async () => {
+    if (submitting || !item.trim()) return;
+    setSubmitting(true);
+    try {
+      await addFacilityRequest({
+        facilityId: facility.id,
+        facilityName: facility.name,
+        item: item.trim(),
+        quantity: quantity.trim(),
+        notes: notes.trim(),
+        status: 'unavailable',
+        location: facility.location,
+        requesterId: user?.id || null,
+        requesterName: user?.name || facility.name,
+      });
+      router.replace('/requests');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <ProtectedRoute>
       <ScreenContainer>
@@ -45,7 +69,7 @@ export default function FacilityRequest() {
             <Input label="What do you need?" value={item} onChangeText={setItem} autoCapitalize="sentences" />
             <Input label="How much?" value={quantity} onChangeText={setQuantity} placeholder="Units, beds, hours" />
             <Input label="Notes" value={notes} onChangeText={setNotes} placeholder="Gate, contact, time window" multiline />
-            <Button label="Send request" onPress={() => router.replace('/requests')} />
+            <Button label="Send request" loading={submitting} onPress={onSend} />
           </ScrollView>
         </KeyboardAvoidingView>
       </ScreenContainer>

@@ -1,6 +1,7 @@
 import { Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import { verificationDisplay } from '@/services/auth';
 import { FONT } from '@/theme/tokens';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
@@ -12,6 +13,7 @@ export default function Profile() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
+  const verification = verificationDisplay(isAuthenticated ? user : null);
   const name = isAuthenticated ? user.name : 'Guest';
   const role = isAuthenticated ? user.role.replace(/_/g, ' ') : 'Browsing';
 
@@ -28,8 +30,8 @@ export default function Profile() {
           </Text>
           <View className="mt-3">
             <StatusBadge
-              status={isAuthenticated && user.verified ? 'available' : 'limited'}
-              label={isAuthenticated && user.verified ? 'Verified' : 'Guest or unverified'}
+              status={isAuthenticated ? verification.status : 'limited'}
+              label={isAuthenticated ? verification.label : 'Guest or unverified'}
             />
           </View>
         </Card>

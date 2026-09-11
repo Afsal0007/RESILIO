@@ -10,8 +10,9 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "RESILIO uses the camera to scan roads and report hazards.",
-        "NSLocationWhenInUseUsageDescription": "RESILIO uses your location to show nearby camps, hazards, and SOS help, and to share your live position while you are on duty."
+        "NSCameraUsageDescription": "RESILIO uses the camera to scan roads and to capture ID or licence photos for volunteer verification.",
+        "NSLocationWhenInUseUsageDescription": "RESILIO uses your location to show nearby camps, hazards, and SOS help, and to share your live position while you are on duty.",
+        "NSPhotoLibraryUsageDescription": "RESILIO uses your photos so you can attach an ID or licence for volunteer verification."
       }
     },
     "android": {
@@ -24,9 +25,16 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES",
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION"
-      ]
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": ""
+        }
+      }
     },
     "web": {
       "bundler": "metro",
@@ -54,10 +62,20 @@
         {
           "locationWhenInUsePermission": "RESILIO uses your location to show nearby camps, hazards, and SOS help, and to share your live position while you are on duty."
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "RESILIO uses your photos so you can attach an ID or licence for volunteer verification.",
+          "cameraPermission": "RESILIO uses the camera to scan roads and to capture ID or licence photos for volunteer verification."
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": false
+    },
+    "extra": {
+      "googleMapsApiKeyNote": "Set android.config.googleMaps.apiKey to a real key before any EAS build."
     }
   }
 }

@@ -79,6 +79,7 @@ function createInitialState() {
     roadReports: seedRoadReports(),
     resources: RESOURCES.map((item) => ({ ...item })),
     facilityNeeds: seedFacilityNeeds(),
+    facilityRequests: [],
     sosCases: SOS_CASES.map((item) => ({ ...item })),
     matches: [],
     facilityFlags: {},
@@ -86,6 +87,81 @@ function createInitialState() {
     lastUpdated: nowIso(),
     baselineSnapshot: null,
   };
+}
+
+export function inboxSortKey(value) {
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+export function formatInboxTime(value) {
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) return value || 'Just now';
+  const delta = Date.now() - parsed;
+  if (delta < 60_000) return 'Just now';
+  if (delta < 3_600_000) return `${Math.max(1, Math.round(delta / 60_000))} min ago`;
+  if (delta < 86_400_000) return `${Math.max(1, Math.round(delta / 3_600_000))} hr ago`;
+  return new Date(parsed).toLocaleDateString();
+}
+
+export function toInboxItems(sosCases = [], facilityRequests = []) {
+  const sosItems = (sosCases || []).map((sos) => ({
+    id: sos.id,
+    kind: 'sos',
+    title: sos.type,
+    type: 'SOS',
+    status: sos.status,
+    location: sos.location,
+    requester: [sos.requesterName || 'Citizen SOS', sos.priority].filter(Boolean).join(' · '),
+    createdAt: formatInboxTime(sos.createdAt),
+    sortKey: inboxSortKey(sos.createdAt),
+  }));
+  const facilityItems = (facilityRequests || []).map((request) => ({
+    id: request.id,
+    kind: 'facility',
+    title: request.item,
+    type: 'Facility need',
+    status: request.status,
+    location: request.facilityName || request.location,
+    requester: [request.quantity, request.facilityName].filter(Boolean).join(' · ') || 'Facility',
+    createdAt: formatInboxTime(request.createdAt),
+    sortKey: inboxSortKey(request.createdAt),
+  }));
+  return [...sosItems, ...facilityItems].sort((a, b) => b.sortKey - a.sortKey);
+}
+
+function mergeRecords(persisted = [], current = [], seed = []) {
+  const map = new Map();
+  (seed || []).forEach((item) => {
+    if (item?.id) map.set(item.id, { ...item });
+  });
+  (persisted || []).forEach((item) => {
+    if (item?.id) map.set(item.id, item);
+  });
+  (current || []).forEach((item) => {
+    if (!item?.id) return;
+    const prev = map.get(item.id);
+    if (!prev) {
+      map.set(item.id, item);
+      return;
+    }
+    const currentAssigned = Boolean(item.assignedTo) || item.status === 'accepted';
+    const prevAssigned = Boolean(prev.assignedTo) || prev.status === 'accepted';
+    if (currentAssigned && !prevAssigned) {
+      map.set(item.id, { ...prev, ...item });
+    } else if (!prevAssigned || currentAssigned) {
+      map.set(item.id, { ...prev, ...item });
+    }
+  });
+  return Array.from(map.values());
+}
+
+export function withAssignedTimeline(timeline = [], title = 'Volunteer assigned') {
+  const marked = timeline.map((step) => (step.done ? step : { ...step, done: true, meta: 'Just now' }));
+  return [
+    ...marked,
+    { id: `assign-${Date.now()}`, title, meta: 'Just now', done: true, status: 'limited' },
+  ];
 }
 
 export function statusFromConfidence(confidence) {
@@ -150,6 +226,8 @@ function resilienceReducer(state, action) {
         lat: resource.lat ?? seedById[resource.id]?.lat ?? null,
         lng: resource.lng ?? seedById[resource.id]?.lng ?? null,
       }));
+      next.sosCases = mergeRecords(action.state?.sosCases, state.sosCases, SOS_CASES);
+      next.facilityRequests = mergeRecords(action.state?.facilityRequests, state.facilityRequests, []);
       return next;
     }
     case 'ADD_ROAD_REPORT':
@@ -186,6 +264,14 @@ function resilienceReducer(state, action) {
     case 'UPDATE_SOS':
       return stamp(state, {
         sosCases: state.sosCases.map((item) =>
+          item.id === action.id ? { ...item, ...action.patch } : item
+        ),
+      });
+    case 'ADD_FACILITY_REQUEST':
+      return stamp(state, { facilityRequests: [action.request, ...state.facilityRequests] });
+    case 'UPDATE_FACILITY_REQUEST':
+      return stamp(state, {
+        facilityRequests: state.facilityRequests.map((item) =>
           item.id === action.id ? { ...item, ...action.patch } : item
         ),
       });
@@ -254,10 +340,8 @@ export function ResilienceProvider({ children }) {
 
   useEffect(() => {
     if (!hydrated) return undefined;
-    const timer = setTimeout(() => {
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => {});
-    }, 400);
-    return () => clearTimeout(timer);
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => {});
+    return undefined;
   }, [state, hydrated]);
 
   const addRoadReport = useCallback(async (payload) => {
@@ -325,13 +409,14 @@ export function ResilienceProvider({ children }) {
   const createSosCase = useCallback(async (payload) => {
     // Stand-in for POST /sos
     const sosCase = {
-      id: `sos-${Date.now()}`,
-      createdAt: 'Just now',
+      createdAt: nowIso(),
       timeline: [
         { id: 's1', title: 'SOS received', meta: 'Just now', done: true, status: payload.priority || 'unavailable' },
         { id: 's2', title: 'Waiting for a crew', meta: 'Now', done: false },
       ],
+      assignedTo: null,
       ...payload,
+      id: payload.id || `sos-${Date.now()}`,
     };
     dispatch({ type: 'CREATE_SOS', sosCase });
     return sosCase;
@@ -340,6 +425,28 @@ export function ResilienceProvider({ children }) {
   const updateSosCase = useCallback(async (id, patch) => {
     // Stand-in for PATCH /sos/:id
     dispatch({ type: 'UPDATE_SOS', id, patch });
+  }, []);
+
+  const addFacilityRequest = useCallback(async (payload) => {
+    // Stand-in for POST /facility-requests
+    const request = {
+      status: 'unavailable',
+      createdAt: nowIso(),
+      assignedTo: null,
+      timeline: [
+        { id: 'r1', title: 'Request opened', meta: 'Just now', done: true, status: payload.status || 'unavailable' },
+        { id: 'r2', title: 'Waiting for a volunteer', meta: 'Now', done: false },
+      ],
+      ...payload,
+      id: payload.id || `freq-${Date.now()}`,
+    };
+    dispatch({ type: 'ADD_FACILITY_REQUEST', request });
+    return request;
+  }, []);
+
+  const updateFacilityRequest = useCallback(async (id, patch) => {
+    // Stand-in for PATCH /facility-requests/:id
+    dispatch({ type: 'UPDATE_FACILITY_REQUEST', id, patch });
   }, []);
 
   const campApiRef = useRef({ getCamp, updateCamp });
@@ -469,12 +576,27 @@ export function ResilienceProvider({ children }) {
     (id) => state.facilityNeeds.find((item) => item.id === id),
     [state.facilityNeeds]
   );
+  const getFacilityRequest = useCallback(
+    (id) => state.facilityRequests.find((item) => item.id === id),
+    [state.facilityRequests]
+  );
+  const getInboxRecord = useCallback(
+    (id) => {
+      const sos = state.sosCases.find((item) => item.id === id);
+      if (sos) return { kind: 'sos', record: sos };
+      const request = state.facilityRequests.find((item) => item.id === id);
+      if (request) return { kind: 'facility', record: request };
+      return null;
+    },
+    [state.sosCases, state.facilityRequests]
+  );
 
   const value = useMemo(
     () => ({
       roadReports: state.roadReports,
       resources: state.resources,
       facilityNeeds: state.facilityNeeds,
+      facilityRequests: state.facilityRequests,
       sosCases: state.sosCases,
       matches: state.matches,
       facilityFlags: state.facilityFlags,
@@ -486,11 +608,15 @@ export function ResilienceProvider({ children }) {
       matchResourceToNeed,
       createSosCase,
       updateSosCase,
+      addFacilityRequest,
+      updateFacilityRequest,
       setScenario,
       getRoadReport,
       getResource,
       getSos,
       getFacilityNeed,
+      getFacilityRequest,
+      getInboxRecord,
       listCamps,
     }),
     [
@@ -501,11 +627,15 @@ export function ResilienceProvider({ children }) {
       matchResourceToNeed,
       createSosCase,
       updateSosCase,
+      addFacilityRequest,
+      updateFacilityRequest,
       setScenario,
       getRoadReport,
       getResource,
       getSos,
       getFacilityNeed,
+      getFacilityRequest,
+      getInboxRecord,
       listCamps,
     ]
   );

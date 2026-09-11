@@ -58,6 +58,7 @@ export function AuthProvider({ children }) {
   const logout = useCallback(() => authService.logout(), []);
   const forgotPassword = useCallback((payload) => authService.forgotPassword(payload), []);
   const demoLogin = useCallback((role) => authService.demoLogin(role), []);
+  const submitVerification = useCallback((uri) => authService.submitVerification(uri), []);
 
   const value = useMemo(
     () => ({
@@ -69,8 +70,9 @@ export function AuthProvider({ children }) {
       logout,
       forgotPassword,
       demoLogin,
+      submitVerification,
     }),
-    [state.user, state.isLoading, login, signUp, logout, forgotPassword, demoLogin]
+    [state.user, state.isLoading, login, signUp, logout, forgotPassword, demoLogin, submitVerification]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

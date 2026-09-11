@@ -14,8 +14,9 @@ export const SOS_CASES = [
     status: 'limited',
     location: 'Kainakary, Kuttanad',
     requesterId: 'demo-citizen',
+    requesterName: 'Demo Citizen',
     acceptedVolunteerId: 'demo-rescue_team',
-    createdAt: '22 min ago',
+    createdAt: new Date(Date.now() - 22 * 60 * 1000).toISOString(),
     timeline: [
       { id: 's1', title: 'SOS received', meta: '22 min ago', done: true, status: 'unavailable' },
       { id: 's2', title: 'Assigned to boat crew', meta: '9 min ago', done: true, status: 'limited' },

@@ -50,12 +50,14 @@ export const STATUS_HEX = {
   available: COLORS.leaf,
   limited: COLORS.marigold,
   unavailable: COLORS.laterite,
+  accepted: COLORS.leaf,
 };
 
 export const STATUS_LABELS = {
   available: 'Available',
   limited: 'Limited',
   unavailable: 'Unavailable',
+  accepted: 'Assigned',
 };
 
 export const TOUCH_MIN = 44;

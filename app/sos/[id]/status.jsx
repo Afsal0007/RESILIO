@@ -29,11 +29,13 @@ export default function SosStatus() {
     );
   }
 
+  const assigned = Boolean(sos.assignedTo) || sos.status === 'accepted';
+
   return (
     <ScreenContainer>
       <Header title="SOS status" showBack />
       <ScrollView className="flex-1 px-4 pt-2" contentContainerStyle={{ paddingBottom: 32 }}>
-        <Card variant="alert" status={sos.status}>
+        <Card variant="alert" status={assigned ? 'accepted' : sos.status}>
           <View className="flex-row items-start justify-between">
             <View className="flex-1 pr-3">
               <Text className="text-[16px] text-ink" style={{ fontFamily: FONT.bold }}>
@@ -43,7 +45,16 @@ export default function SosStatus() {
                 {sos.location}
               </Text>
             </View>
-            <StatusBadge status={sos.status} />
+            <StatusBadge
+              status={assigned ? 'accepted' : sos.status}
+              label={
+                assigned
+                  ? sos.assignedName
+                    ? `Volunteer assigned · ${sos.assignedName}`
+                    : 'Volunteer assigned'
+                  : undefined
+              }
+            />
           </View>
         </Card>
         <View className="mt-6">
@@ -53,7 +64,9 @@ export default function SosStatus() {
         <ExactResponderLocation
           taskKey={`sos:${sos.id}`}
           requesterId={sos.requesterId}
-          fallbackVolunteerId={sos.acceptedVolunteerId}
+          fallbackVolunteerId={sos.assignedTo || sos.acceptedVolunteerId}
+          volunteerName={sos.assignedName}
+          fallbackCoords={{ lat: sos.assignedLat, lng: sos.assignedLng }}
         />
       </ScrollView>
     </ScreenContainer>
