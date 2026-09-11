@@ -84,3 +84,52 @@ export async function fetchNearbyHospitals(lat, lng, radiusMeters = 15000) {
     return [];
   }
 }
+
+const ROAD_NAME_KEYS = ['road', 'pedestrian', 'footway', 'path', 'residential'];
+const NOMINATIM_REVERSE_URL = 'https://nominatim.openstreetmap.org/reverse';
+const NOMINATIM_HEADERS = {
+  Accept: 'application/json',
+  'User-Agent': 'RESILIO-Kerala-DisasterApp/1.0 (hackathon prototype)',
+};
+
+function reverseCacheKey(lat, lng) {
+  return `rev:${Number(lat).toFixed(2)}:${Number(lng).toFixed(2)}`;
+}
+
+function roadNameFromAddress(address = {}) {
+  for (const key of ROAD_NAME_KEYS) {
+    const value = String(address[key] || '').trim();
+    if (value) return value;
+  }
+  return null;
+}
+
+export async function reverseGeocodeRoad(lat, lng) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  const key = reverseCacheKey(lat, lng);
+  if (Object.prototype.hasOwnProperty.call(cache, key)) return cache[key];
+
+  try {
+    const url = `${NOMINATIM_REVERSE_URL}?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}&zoom=17&addressdetails=1`;
+    const response = await fetchWithTimeout(
+      url,
+      { method: 'GET', headers: NOMINATIM_HEADERS },
+      REQUEST_TIMEOUT_MS
+    );
+    if (!response.ok) return null;
+    const payload = await response.json();
+    const roadName = roadNameFromAddress(payload.address);
+    if (!roadName) {
+      cache[key] = null;
+      return null;
+    }
+    const result = {
+      roadName,
+      displayName: payload.display_name || roadName,
+    };
+    cache[key] = result;
+    return result;
+  } catch {
+    return null;
+  }
+}

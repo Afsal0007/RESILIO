@@ -232,6 +232,12 @@ function resilienceReducer(state, action) {
     }
     case 'ADD_ROAD_REPORT':
       return stamp(state, { roadReports: [action.report, ...state.roadReports] });
+    case 'UPDATE_ROAD_REPORT':
+      return stamp(state, {
+        roadReports: state.roadReports.map((item) =>
+          item.id === action.id ? { ...item, ...action.patch } : item
+        ),
+      });
     case 'CONFIRM_ROAD_REPORT':
       return stamp(state, {
         roadReports: state.roadReports.map((report) =>
@@ -377,9 +383,16 @@ export function ResilienceProvider({ children }) {
       label,
       source,
       aiAnalysis: payload.aiAnalysis || null,
+      roadName: payload.roadName || 'RoadScan report',
+      roadNameSource: payload.roadNameSource || null,
     };
     dispatch({ type: 'ADD_ROAD_REPORT', report });
     return report;
+  }, []);
+
+  const updateRoadReport = useCallback(async (id, patch) => {
+    // Stand-in for PATCH /road-reports/:id
+    dispatch({ type: 'UPDATE_ROAD_REPORT', id, patch });
   }, []);
 
   const confirmRoadReport = useCallback(async (reportId, confirmerName) => {
@@ -612,6 +625,7 @@ export function ResilienceProvider({ children }) {
       scenarioState: state.scenarioState,
       lastUpdated: state.lastUpdated,
       addRoadReport,
+      updateRoadReport,
       confirmRoadReport,
       addResourceOffer,
       matchResourceToNeed,
@@ -631,6 +645,7 @@ export function ResilienceProvider({ children }) {
     [
       state,
       addRoadReport,
+      updateRoadReport,
       confirmRoadReport,
       addResourceOffer,
       matchResourceToNeed,

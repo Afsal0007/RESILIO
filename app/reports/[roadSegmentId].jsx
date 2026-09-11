@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
-import { Image, ScrollView, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { FONT, RADIUS } from '@/theme/tokens';
+import { Pencil } from 'lucide-react-native';
+import { COLORS, FONT, RADIUS } from '@/theme/tokens';
 import { useAuth } from '@/context/AuthContext';
 import { useResilience } from '@/services/resilienceStore';
 import ScreenContainer from '@/components/layout/ScreenContainer';
@@ -11,11 +12,13 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import ProgressBar from '@/components/ui/ProgressBar';
 import SectionHeading from '@/components/ui/SectionHeading';
 import Button from '@/components/ui/Button';
+import RoadNameEditModal from '@/components/ui/RoadNameEditModal';
 
 export default function RoadReport() {
   const { roadSegmentId } = useLocalSearchParams();
   const { user } = useAuth();
   const { getRoadReport, confirmRoadReport } = useResilience();
+  const [editOpen, setEditOpen] = useState(false);
   const id = Array.isArray(roadSegmentId) ? roadSegmentId[0] : roadSegmentId;
   const report = getRoadReport(id);
   const confirmerName = user?.name || 'You';
@@ -39,7 +42,24 @@ export default function RoadReport() {
 
   return (
     <ScreenContainer>
-      <Header title={report.roadName} showBack />
+      <Header
+        title={report.roadName}
+        showBack
+        rightAction={
+          <Pressable
+            onPress={() => setEditOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Edit road name"
+            className="flex-row items-center justify-center px-2"
+            style={{ minWidth: 44, height: 44 }}
+          >
+            <Pencil color={COLORS.backwater} size={16} />
+            <Text className="ml-1 text-[14px] text-backwater" style={{ fontFamily: FONT.semibold }}>
+              Edit
+            </Text>
+          </Pressable>
+        }
+      />
       <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 32 }}>
         {report.evidenceUri ? (
           <Image
@@ -97,6 +117,7 @@ export default function RoadReport() {
           onPress={() => confirmRoadReport(report.id, confirmerName)}
         />
       </ScrollView>
+      <RoadNameEditModal visible={editOpen} report={report} onClose={() => setEditOpen(false)} />
     </ScreenContainer>
   );
 }

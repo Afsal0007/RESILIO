@@ -1,12 +1,15 @@
-import { Image, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Image, Pressable, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { FONT, RADIUS } from '@/theme/tokens';
+import { Pencil } from 'lucide-react-native';
+import { COLORS, FONT, RADIUS } from '@/theme/tokens';
 import { useResilience } from '@/services/resilienceStore';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
 import Card from '@/components/ui/Card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import Button from '@/components/ui/Button';
+import RoadNameEditModal from '@/components/ui/RoadNameEditModal';
 
 function confidencePercent(confidence) {
   const numeric = Number(confidence);
@@ -18,6 +21,7 @@ export default function RoadScanResult() {
   const router = useRouter();
   const { reportId } = useLocalSearchParams();
   const { getRoadReport } = useResilience();
+  const [editOpen, setEditOpen] = useState(false);
   const id = Array.isArray(reportId) ? reportId[0] : reportId;
   const report = getRoadReport(id);
 
@@ -53,9 +57,26 @@ export default function RoadScanResult() {
           />
         ) : null}
         <Card variant="alert" status={report.status} className="mt-2">
-          <View className="flex-row items-start justify-between">
+          <View className="flex-row items-start">
+            <Text className="flex-1 pr-2 text-[16px] text-ink" style={{ fontFamily: FONT.bold }}>
+              {report.roadName}
+            </Text>
+            <Pressable
+              onPress={() => setEditOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Edit road name"
+              hitSlop={8}
+              className="flex-row items-center"
+            >
+              <Pencil color={COLORS.backwater} size={14} />
+              <Text className="ml-1 text-[13px] text-backwater" style={{ fontFamily: FONT.semibold }}>
+                Edit
+              </Text>
+            </Pressable>
+          </View>
+          <View className="mt-2 flex-row items-start justify-between">
             <View className="flex-1 pr-3">
-              <Text className="text-[16px] text-ink" style={{ fontFamily: FONT.bold }}>
+              <Text className="text-[15px] text-ink" style={{ fontFamily: FONT.bold }}>
                 {report.issue || 'Uncertain observation from this photo.'}
               </Text>
               <Text className="mt-2 text-[13px] text-ink/80" style={{ fontFamily: FONT.regular }}>
@@ -80,6 +101,7 @@ export default function RoadScanResult() {
         <Button className="mt-5" label="Open full report" onPress={() => router.push(`/reports/${report.id}`)} />
         <Button className="mt-3" variant="secondary" label="Scan another road" onPress={() => router.replace('/roadscan')} />
       </View>
+      <RoadNameEditModal visible={editOpen} report={report} onClose={() => setEditOpen(false)} />
     </ScreenContainer>
   );
 }
