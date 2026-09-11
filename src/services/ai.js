@@ -42,11 +42,33 @@ export function fallbackRoadAnalysis(reason = 'unavailable') {
   };
 }
 
+function isPrivateHost(host) {
+  const value = String(host || '').toLowerCase();
+  if (value === 'localhost' || value === '127.0.0.1' || value === '10.0.2.2') return true;
+  if (/^10\.\d+\.\d+\.\d+$/.test(value)) return true;
+  if (/^192\.168\.\d+\.\d+$/.test(value)) return true;
+  if (/^172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+$/.test(value)) return true;
+  return false;
+}
+
 function analyzeEndpoint() {
-  const base = String(process.env.EXPO_PUBLIC_RESILIO_AI_URL || '')
+  let base = String(process.env.EXPO_PUBLIC_RESILIO_AI_URL || '')
     .trim()
     .replace(/\/+$/, '');
-  if (!base) return null;
+  if (!base || /YOUR_COMPUTER_LAN_IP/i.test(base)) return null;
+
+  try {
+    const parsed = new URL(base);
+    // Uvicorn is HTTP. HTTPS to that port is a TLS handshake, which the
+    // server logs as "Invalid HTTP request received" and the app falls back.
+    if (parsed.protocol === 'https:' && isPrivateHost(parsed.hostname)) {
+      parsed.protocol = 'http:';
+      base = parsed.origin;
+    }
+  } catch {
+    return null;
+  }
+
   return `${base}/analyze/road`;
 }
 

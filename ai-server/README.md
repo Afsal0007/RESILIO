@@ -48,4 +48,6 @@ curl -X POST http://localhost:8000/analyze/road \
   -F "longitude=76.3125"
 ```
 
-A valid image should return JSON with `label`, `issue`, `confidence`, `source`, `needs_confirmation`, and the coordinates. If `HF_TOKEN` / `HF_MODEL` are still placeholders, you should get the local fallback (`source: local-fallback`) rather than a crash.
+A valid image should return JSON with `label`, `issue`, `confidence`, `source`, `needs_confirmation`, and the coordinates. If `HF_TOKEN` / `HF_MODEL` are still placeholders, or Hugging Face is unreachable, you should get the local fallback (`source: local-fallback`) rather than a crash.
+
+The server calls `https://router.huggingface.co/hf-inference/models/{HF_MODEL}` (the old `api-inference.huggingface.co` host was retired). The token needs **Inference Providers** permission: https://huggingface.co/settings/tokens

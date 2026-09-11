@@ -8,9 +8,16 @@ from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, UnidentifiedImageError
 
-load_dotenv()
 
-HF_INFERENCE_URL = "https://api-inference.huggingface.co/models/{model}"
+def env_value(name: str) -> str:
+    return str(os.getenv(name) or "").strip()
+
+
+load_dotenv()
+print(f"[startup] HF_MODEL={'set: ' + model if (model := env_value('HF_MODEL')) else 'MISSING'}")
+print(f"[startup] HF_TOKEN={'set (' + str(len(token)) + ' chars)' if (token := env_value('HF_TOKEN')) else 'MISSING'}")
+
+HF_INFERENCE_URL = "https://router.huggingface.co/hf-inference/models/{model}"
 HF_TIMEOUT_SECONDS = 30
 
 ISSUE_BY_LABEL = {
@@ -47,10 +54,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-def env_value(name: str) -> str:
-    return str(os.getenv(name) or "").strip()
 
 
 def clamp_confidence(value: Any) -> float:
@@ -142,9 +145,11 @@ def from_huggingface(payload: Any, model: str) -> Optional[dict]:
 
 
 def call_huggingface(raw: bytes, token: str, model: str, content_type: str) -> tuple[Optional[int], Any]:
+    url = HF_INFERENCE_URL.format(model=model)
+    print(f"[huggingface] POST {url}")
     try:
         response = requests.post(
-            HF_INFERENCE_URL.format(model=model),
+            url,
             headers={
                 "Authorization": f"Bearer {token}",
                 "Content-Type": content_type or "application/octet-stream",
@@ -152,8 +157,12 @@ def call_huggingface(raw: bytes, token: str, model: str, content_type: str) -> t
             data=raw,
             timeout=HF_TIMEOUT_SECONDS,
         )
-    except requests.RequestException:
+    except requests.RequestException as exc:
+        print(f"[huggingface] RequestException: {exc}")
         return None, None
+    preview = (response.text or "")[:300]
+    print(f"[huggingface] status={response.status_code}")
+    print(f"[huggingface] body={preview}")
     try:
         body = response.json()
     except ValueError:
@@ -174,14 +183,20 @@ async def analyze_road(
     token = env_value("HF_TOKEN")
     model = env_value("HF_MODEL")
     if not token or not model:
+        print("[analyze] local_fallback: missing HF_TOKEN or HF_MODEL")
         return local_fallback(latitude, longitude)
 
     status_code, body = call_huggingface(raw, token, model, file.content_type or "")
+    if status_code is None:
+        print("[analyze] local_fallback: Hugging Face unreachable (network/DNS)")
+        return local_fallback(latitude, longitude)
     if status_code == 503:
+        print("[analyze] local_fallback: Hugging Face returned 503 (cold model loading)")
         return local_fallback(latitude, longitude)
 
     result = from_huggingface(body, model)
     if result is None:
+        print("[analyze] local_fallback: unparseable prediction (not a usable list)")
         return local_fallback(latitude, longitude)
 
     return with_location(result, latitude, longitude)
