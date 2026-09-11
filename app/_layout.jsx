@@ -6,6 +6,8 @@ import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { AppProvider } from '@/context/AppContext';
 import { CampsProvider } from '@/services/campsStore';
 import { ResilienceProvider } from '@/services/resilienceStore';
+import { VolunteerPresenceProvider } from '@/services/volunteerPresenceStore';
+import { VolunteerLiveTracker } from '@/hooks/useLiveLocation';
 import { COLORS } from '@/theme/tokens';
 import SplashView from '@/components/layout/SplashView';
 
@@ -26,9 +28,12 @@ export default function RootLayout() {
     <AuthProvider>
       <AppProvider>
         <CampsProvider>
-          <ResilienceProvider>
-            <RootNavigation />
-          </ResilienceProvider>
+            <ResilienceProvider>
+              <VolunteerPresenceProvider>
+                <VolunteerLiveTracker />
+                <RootNavigation />
+              </VolunteerPresenceProvider>
+            </ResilienceProvider>
         </CampsProvider>
       </AppProvider>
     </AuthProvider>

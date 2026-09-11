@@ -48,18 +48,37 @@ export default function ResilioMap({
         rotateEnabled={false}
         {...mapProps}
       >
-        {markers.map((marker) => (
-          <Marker
-            key={marker.id}
-            coordinate={marker.coordinate}
-            pinColor={marker.pinColor}
-            title={marker.title}
-            description={marker.description}
-            draggable={Boolean(marker.draggable)}
-            onPress={marker.onPress}
-            onDragEnd={marker.onDragEnd}
-          />
-        ))}
+        {markers.map((marker) => {
+          const Icon = marker.Icon;
+          if (Icon && !marker.draggable) {
+            return (
+              <Marker
+                key={marker.id}
+                coordinate={marker.coordinate}
+                title={marker.title}
+                description={marker.description}
+                onPress={marker.onPress}
+                anchor={{ x: 0.5, y: 0.5 }}
+              >
+                <View style={[styles.rolePin, { backgroundColor: marker.pinColor || COLORS.leaf }]}>
+                  <Icon color={COLORS.white} size={14} />
+                </View>
+              </Marker>
+            );
+          }
+          return (
+            <Marker
+              key={marker.id}
+              coordinate={marker.coordinate}
+              pinColor={marker.pinColor}
+              title={marker.title}
+              description={marker.description}
+              draggable={Boolean(marker.draggable)}
+              onPress={marker.onPress}
+              onDragEnd={marker.onDragEnd}
+            />
+          );
+        })}
         {children}
       </MapView>
       {showRecenterButton ? (
@@ -102,5 +121,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 20,
     elevation: 4,
+  },
+  rolePin: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.ink,
   },
 });

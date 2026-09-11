@@ -1,4 +1,4 @@
-import { Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useResilience } from '@/services/resilienceStore';
 import { FONT } from '@/theme/tokens';
@@ -8,6 +8,7 @@ import Card from '@/components/ui/Card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import Timeline from '@/components/ui/Timeline';
 import SectionHeading from '@/components/ui/SectionHeading';
+import ExactResponderLocation from '@/components/map/ExactResponderLocation';
 
 export default function SosStatus() {
   const { id } = useLocalSearchParams();
@@ -31,7 +32,7 @@ export default function SosStatus() {
   return (
     <ScreenContainer>
       <Header title="SOS status" showBack />
-      <View className="flex-1 px-4 pt-2">
+      <ScrollView className="flex-1 px-4 pt-2" contentContainerStyle={{ paddingBottom: 32 }}>
         <Card variant="alert" status={sos.status}>
           <View className="flex-row items-start justify-between">
             <View className="flex-1 pr-3">
@@ -49,7 +50,12 @@ export default function SosStatus() {
           <SectionHeading>Progress</SectionHeading>
           <Timeline steps={sos.timeline} />
         </View>
-      </View>
+        <ExactResponderLocation
+          taskKey={`sos:${sos.id}`}
+          requesterId={sos.requesterId}
+          fallbackVolunteerId={sos.acceptedVolunteerId}
+        />
+      </ScrollView>
     </ScreenContainer>
   );
 }

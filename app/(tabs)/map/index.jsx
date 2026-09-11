@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { VOLUNTEER_TASKS } from '@/mock-data/volunteers';
 import { COLORS, FONT, STATUS_HEX } from '@/theme/tokens';
 import { useCamps, campPinStatus } from '@/services/campsStore';
 import { useResilience } from '@/services/resilienceStore';
+import {
+  listOnDutyVolunteers,
+  toPublicVolunteerMarker,
+  useVolunteerPresence,
+} from '@/services/volunteerPresenceStore';
 import { fetchNearbyHospitals } from '@/services/osm';
-import useGuardedAction from '@/hooks/useGuardedAction';
 import { KERALA_REGION, requestUserCoords } from '@/hooks/useUserLocation';
 import useSortedCamps from '@/hooks/useSortedCamps';
 import ScreenContainer from '@/components/layout/ScreenContainer';
@@ -23,13 +26,15 @@ const HOSPITAL_RADIUS_M = 15000;
 
 export default function MapScreen() {
   const router = useRouter();
-  const requireAuth = useGuardedAction();
   const { camps } = useCamps();
   const { roadReports, resources } = useResilience();
+  const { presence } = useVolunteerPresence();
   const nearbyCamps = useSortedCamps(camps);
+  const volunteers = useMemo(() => listOnDutyVolunteers(presence), [presence]);
   const [layer, setLayer] = useState('Camps');
   const [osmHospitals, setOsmHospitals] = useState([]);
   const [hospitalLoading, setHospitalLoading] = useState(false);
+  const [selectedVolunteerId, setSelectedVolunteerId] = useState(null);
 
   const hospitals = osmHospitals;
 
@@ -93,8 +98,20 @@ export default function MapScreen() {
         onPress: () => router.push(`/reports/${report.id}`),
       }));
     }
+    if (layer === 'Volunteers') {
+      return volunteers
+        .map((entry) => {
+          const marker = toPublicVolunteerMarker(entry);
+          if (!marker) return null;
+          return {
+            ...marker,
+            onPress: () => setSelectedVolunteerId(entry.userId),
+          };
+        })
+        .filter(Boolean);
+    }
     return [];
-  }, [camps, hospitals, layer, roadReports, router]);
+  }, [camps, hospitals, layer, roadReports, router, volunteers]);
 
   return (
     <ScreenContainer>
@@ -189,19 +206,35 @@ export default function MapScreen() {
                 ))
               : null}
             {layer === 'Volunteers'
-              ? VOLUNTEER_TASKS.map((task) => (
-                  <Card key={task.id} variant="browse" className="mb-3" onPress={() => requireAuth('/volunteer/dashboard', 'open the volunteer desk')}>
-                    <View className="flex-row items-start justify-between">
-                      <Text className="flex-1 pr-3 text-[15px] text-ink" style={{ fontFamily: FONT.bold }}>
-                        {task.title}
-                      </Text>
-                      <StatusBadge status={task.status} />
-                    </View>
-                    <Text className="mt-1 text-[12px] text-ink/70" style={{ fontFamily: FONT.medium }}>
-                      {task.when}
-                    </Text>
-                  </Card>
-                ))
+              ? volunteers.length === 0
+                ? (
+                  <Text className="mb-3 text-[13px] text-ink/70" style={{ fontFamily: FONT.regular }}>
+                    No volunteers are sharing location right now.
+                  </Text>
+                )
+                : volunteers.map((entry) => {
+                    const marker = toPublicVolunteerMarker(entry);
+                    if (!marker) return null;
+                    const selected = selectedVolunteerId === entry.userId;
+                    return (
+                      <Card
+                        key={entry.userId}
+                        variant="browse"
+                        className="mb-3"
+                        onPress={() => setSelectedVolunteerId(entry.userId)}
+                      >
+                        <View className="flex-row items-start justify-between">
+                          <Text className="flex-1 pr-3 text-[15px] text-ink" style={{ fontFamily: FONT.bold }}>
+                            {marker.title}
+                          </Text>
+                          <StatusBadge status="available" label="On duty" />
+                        </View>
+                        <Text className="mt-1 text-[12px] text-ink/70" style={{ fontFamily: FONT.medium }}>
+                          {selected ? marker.description : 'Approximate area only — name hidden'}
+                        </Text>
+                      </Card>
+                    );
+                  })
               : null}
           </ScrollView>
         </View>

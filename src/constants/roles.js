@@ -117,3 +117,33 @@ export function isVerificationRequired(roleId) {
 export function isOrganizationRole(roleId) {
   return roleId === NGO_ORGANIZATION.id || roleId === RESOURCE_PROVIDER.id;
 }
+
+export const DUTY_SHARING_ROLES = [
+  VOLUNTEER.id,
+  MEDICAL_TEAM.id,
+  RESCUE_TEAM.id,
+  DRIVER.id,
+  ELECTRICIAN.id,
+  TECHNICIAN.id,
+];
+
+export function isDutySharingRole(roleId) {
+  return DUTY_SHARING_ROLES.includes(roleId);
+}
+
+export function skillCategoryForRole(roleId) {
+  if (roleId === MEDICAL_TEAM.id) return 'medical';
+  if (roleId === ELECTRICIAN.id || roleId === TECHNICIAN.id) return 'technical';
+  if (roleId === RESCUE_TEAM.id) return 'rescue';
+  if (roleId === DRIVER.id) return 'relief';
+  return 'community';
+}
+
+export const ROLE_MAP_GLYPH = {
+  VOLUNTEER: '♥',
+  MEDICAL_TEAM: '+',
+  RESCUE_TEAM: '◉',
+  DRIVER: '▸',
+  ELECTRICIAN: '⚡',
+  TECHNICIAN: '⚙',
+};

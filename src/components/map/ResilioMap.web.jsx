@@ -50,29 +50,56 @@ const LEAFLET_HTML = `<!DOCTYPE html>
       );
     }
 
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
     function setMarkers(markers) {
       pinLayer.clearLayers();
       Object.keys(pins).forEach((key) => delete pins[key]);
       (markers || []).forEach((marker) => {
-        const pin = L.circleMarker([marker.latitude, marker.longitude], {
-          radius: 9,
-          color: '#10262B',
-          weight: 1,
-          fillColor: marker.pinColor || '#1F5C57',
-          fillOpacity: 1
-        });
         if (marker.draggable) {
           const drag = L.marker([marker.latitude, marker.longitude], { draggable: true });
           drag.on('dragend', function (event) {
             const point = event.target.getLatLng();
             send({ type: 'dragend', id: marker.id, latitude: point.lat, longitude: point.lng });
           });
-          if (marker.title) drag.bindPopup(marker.title);
+          if (marker.title) drag.bindPopup(escapeHtml(marker.title));
           drag.addTo(pinLayer);
           pins[marker.id] = drag;
           return;
         }
-        if (marker.title) pin.bindPopup(marker.title);
+        let pin;
+        if (marker.glyph) {
+          const icon = L.divIcon({
+            className: '',
+            html: '<div style="width:28px;height:28px;border-radius:14px;background:' +
+              (marker.pinColor || '#1F5C57') +
+              ';border:2px solid #10262B;display:flex;align-items:center;justify-content:center;color:#F1EDE4;font-size:14px;font-weight:700;line-height:28px;text-align:center;">' +
+              escapeHtml(marker.glyph) +
+              '</div>',
+            iconSize: [28, 28],
+            iconAnchor: [14, 14],
+          });
+          pin = L.marker([marker.latitude, marker.longitude], { icon: icon });
+        } else {
+          pin = L.circleMarker([marker.latitude, marker.longitude], {
+            radius: 9,
+            color: '#10262B',
+            weight: 1,
+            fillColor: marker.pinColor || '#1F5C57',
+            fillOpacity: 1
+          });
+        }
+        const popup = [marker.title, marker.description]
+          .filter(Boolean)
+          .map(escapeHtml)
+          .join('<br/>');
+        if (popup) pin.bindPopup(popup);
         pin.on('click', function () { send({ type: 'press', id: marker.id }); });
         pin.addTo(pinLayer);
         pins[marker.id] = pin;
@@ -116,7 +143,9 @@ function serializeMarkers(markers) {
   return (markers || []).map((marker) => ({
     id: marker.id,
     title: marker.title,
+    description: marker.description,
     pinColor: marker.pinColor,
+    glyph: marker.glyph || null,
     draggable: Boolean(marker.draggable),
     latitude: marker.coordinate?.latitude,
     longitude: marker.coordinate?.longitude,

@@ -2,6 +2,9 @@ import { ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { getRequest } from '@/mock-data/requests';
 import { FONT } from '@/theme/tokens';
+import { useAuth } from '@/context/AuthContext';
+import { isDutySharingRole } from '@/constants/roles';
+import { useVolunteerPresence } from '@/services/volunteerPresenceStore';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
 import Card from '@/components/ui/Card';
@@ -11,6 +14,8 @@ import Button from '@/components/ui/Button';
 export default function RequestDetail() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const { user } = useAuth();
+  const { acceptTask } = useVolunteerPresence();
   const request = getRequest(id);
 
   return (
@@ -32,7 +37,15 @@ export default function RequestDetail() {
           </Text>
         </Card>
         <View className="mt-5" style={{ gap: 12 }}>
-          <Button label="Accept" onPress={() => router.push(`/requests/${request.id}/active`)} />
+          <Button
+            label="Accept"
+            onPress={() => {
+              if (user?.id && isDutySharingRole(user.role)) {
+                acceptTask(`request:${request.id}`, user.id);
+              }
+              router.push(`/requests/${request.id}/active`);
+            }}
+          />
           <Button label="Decline" variant="danger" onPress={() => router.back()} />
         </View>
       </ScrollView>

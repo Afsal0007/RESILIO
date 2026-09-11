@@ -11,7 +11,7 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSCameraUsageDescription": "RESILIO uses the camera to scan roads and report hazards.",
-        "NSLocationWhenInUseUsageDescription": "RESILIO uses your location to show nearby camps, hazards, and SOS help."
+        "NSLocationWhenInUseUsageDescription": "RESILIO uses your location to show nearby camps, hazards, and SOS help, and to share your live position while you are on duty."
       }
     },
     "android": {
@@ -52,7 +52,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "RESILIO uses your location to show nearby camps, hazards, and SOS help."
+          "locationWhenInUsePermission": "RESILIO uses your location to show nearby camps, hazards, and SOS help, and to share your live position while you are on duty."
         }
       ]
     ],

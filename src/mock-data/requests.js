@@ -7,6 +7,8 @@ export const REQUESTS = [
     status: 'unavailable',
     requester: 'Maya T., Kainakary',
     location: 'Kuttanad',
+    requesterId: 'demo-citizen',
+    acceptedVolunteerId: null,
     createdAt: '11 min ago',
     details: 'Family stranded on the first floor. Water at chest height on the lane.',
     timeline: [
@@ -23,6 +25,8 @@ export const REQUESTS = [
     status: 'limited',
     requester: 'PHC Painavu',
     location: 'Idukki',
+    requesterId: 'demo-citizen',
+    acceptedVolunteerId: 'demo-medical_team',
     createdAt: '32 min ago',
     details: 'Cold-chain insulin. Can receive at the PHC gate.',
     timeline: [
@@ -39,6 +43,8 @@ export const REQUESTS = [
     status: 'limited',
     requester: 'Thrissur camp coordinator',
     location: 'Thrissur',
+    requesterId: 'demo-citizen',
+    acceptedVolunteerId: null,
     createdAt: '1 hr ago',
     details: 'Generator is running but the camp pump will not start.',
     timeline: [
@@ -54,6 +60,8 @@ export const REQUESTS = [
     status: 'available',
     requester: 'Vadanapally Bhagavathy Temple dining hall',
     location: 'Vadanappally',
+    requesterId: 'demo-citizen',
+    acceptedVolunteerId: null,
     createdAt: '2 hr ago',
     details: 'Rice and sambar already cooking. Need vegetables and oil.',
     timeline: [
@@ -70,6 +78,8 @@ export const REQUESTS = [
     status: 'unavailable',
     requester: 'Ward member, Punnamada',
     location: 'Alappuzha',
+    requesterId: 'demo-citizen',
+    acceptedVolunteerId: null,
     createdAt: '3 hr ago',
     details: 'Need a high vehicle. Two people use wheelchairs.',
     timeline: [

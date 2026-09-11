@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { SOS_TYPES } from '@/mock-data/sos';
 import { useResilience } from '@/services/resilienceStore';
 import { FONT } from '@/theme/tokens';
+import { useAuth } from '@/context/AuthContext';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import Header from '@/components/layout/Header';
 import SectionHeading from '@/components/ui/SectionHeading';
@@ -20,6 +21,7 @@ const PRIORITIES = [
 
 export default function Sos() {
   const router = useRouter();
+  const { user } = useAuth();
   const { createSosCase } = useResilience();
   const [type, setType] = useState('flood');
   const [priority, setPriority] = useState('unavailable');
@@ -71,6 +73,7 @@ export default function Sos() {
                 priority,
                 status: priority,
                 location,
+                requesterId: user?.id || null,
               });
               router.push(`/sos/${sos.id}/status`);
             } finally {

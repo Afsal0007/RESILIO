@@ -13,6 +13,8 @@ export const SOS_CASES = [
     priority: 'unavailable',
     status: 'limited',
     location: 'Kainakary, Kuttanad',
+    requesterId: 'demo-citizen',
+    acceptedVolunteerId: 'demo-rescue_team',
     createdAt: '22 min ago',
     timeline: [
       { id: 's1', title: 'SOS received', meta: '22 min ago', done: true, status: 'unavailable' },
